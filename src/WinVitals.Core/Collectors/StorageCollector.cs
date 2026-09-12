@@ -223,8 +223,29 @@ public sealed class StorageCollector : ICollector
             TryAdd(found, "Recycle Bin", Path.Combine(drive.Name, "$Recycle.Bin"));
         }
 
+        // A previous installation left behind by a feature update. Windows deletes it
+        // itself after ten days, unless Storage Sense is off, in which case it can
+        // sit there for years at 15-30 GB.
+        var systemRoot = Path.GetPathRoot(Environment.SystemDirectory) ?? @"C:\";
+        var windowsOld = Path.Combine(systemRoot, "Windows.old");
+        TryAdd(found, "Previous Windows installation", windowsOld);
+
         foreach (var (what, path, size) in found.OrderByDescending(f => f.Size))
             m.Fact(what, CollectorExtensions.Bytes(size), path);
+
+        var old = found.FirstOrDefault(f => f.Path.Equals(windowsOld, StringComparison.OrdinalIgnoreCase));
+        if (old.Size > 1L * 1024 * 1024 * 1024)
+        {
+            m.Add(Severity.Advisory, "storage.windows-old",
+                $"A previous Windows installation is using {CollectorExtensions.Bytes(old.Size)}",
+                what: $"{windowsOld} holds the Windows that was here before the last big update.",
+                why: "It exists so you can roll the update back. Windows normally removes it after ten "
+                     + "days; if it is still here, that window has almost certainly passed and it is just "
+                     + "occupying space.",
+                action: "Remove it if you are not planning to go back to the previous version. This cannot "
+                        + "be undone, and rolling back the update becomes impossible.",
+                evidence: $"{windowsOld} = {CollectorExtensions.Bytes(old.Size)}");
+        }
 
         var backups = found.Where(f => f.What.Contains("backup", StringComparison.OrdinalIgnoreCase)).ToList();
         var backupTotal = backups.Sum(b => b.Size);

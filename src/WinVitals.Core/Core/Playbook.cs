@@ -41,8 +41,8 @@ public static class Playbooks
         {
             Id = "slow",
             Title = "My PC is slow",
-            Subtitle = "Startup programs, memory, disk health and free space, and anything crashing in the background.",
-            Modules = new[] { "system", "storage", "memory", "startup", "devices", "reliability" },
+            Subtitle = "How long it takes to boot, startup programs, memory, disk health and free space, and anything crashing in the background.",
+            Modules = new[] { "system", "boot", "storage", "memory", "startup", "devices", "reliability" },
             Duration = "about 40 seconds",
         },
         new Playbook

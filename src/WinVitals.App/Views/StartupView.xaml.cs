@@ -127,6 +127,10 @@ public partial class StartupView : UserControl
 
         toggle.Content = enable ? "On" : "Off";
 
+        // The first time something is switched off, remember how long the last boot
+        // took so the next one can be compared with it.
+        if (!enable) SpeedupSnapshot.EnsureTaken();
+
         if (undo is null) return;
         _journal ??= new UndoJournal(AppInfo.Version);
         _journal.Record($"startup.{item.Name}", $"{(enable ? "Enabled" : "Disabled")} \"{item.Name}\" at sign-in",

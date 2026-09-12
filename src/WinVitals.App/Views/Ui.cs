@@ -197,6 +197,50 @@ internal static class Ui
         return grid;
     }
 
+    /// <summary>
+    /// A repair offered as a tool: title, risk line, explanation, Run button. Shared by
+    /// every page that lists tools so they cannot drift apart.
+    /// </summary>
+    public static Border ToolCard(WinVitals.Remediation.IFix fix, Action<WinVitals.Remediation.IFix> onRun)
+    {
+        var panel = new StackPanel();
+
+        var header = new Grid();
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        var titles = new StackPanel();
+        titles.Children.Add(Text(fix.Title, "H2"));
+
+        var risk = fix.Risk switch
+        {
+            WinVitals.Remediation.FixRisk.Safe => "Safe to run at any time",
+            WinVitals.Remediation.FixRisk.Moderate => "Takes a while, or needs a restart",
+            _ => "Changes something you may rely on",
+        };
+        var undo = fix.Reversible ? "can be undone"
+            : fix.NothingToUndo ? "nothing to undo"
+            : "cannot be undone";
+        titles.Children.Add(Text($"{risk} · {undo}", "Label", new Thickness(0, 4, 0, 0)));
+
+        Grid.SetColumn(titles, 0);
+        header.Children.Add(titles);
+
+        var run = Button("Run", "Secondary", (_, _) => onRun(fix));
+        run.MinWidth = 84;
+        run.VerticalAlignment = VerticalAlignment.Top;
+        Grid.SetColumn(run, 1);
+        header.Children.Add(run);
+
+        panel.Children.Add(header);
+        panel.Children.Add(Text(fix.Explain, "Body", new Thickness(0, 10, 0, 0)));
+
+        var card = Card(panel, new Thickness(0, 0, 0, 10));
+        card.BorderThickness = new Thickness(4, 1, 1, 1);
+        card.BorderBrush = Brush(fix.Risk == WinVitals.Remediation.FixRisk.Safe ? "Ok" : "Warning");
+        return card;
+    }
+
     /// <summary>One of the counters across the top of the results page.</summary>
     public static Border Tile(int count, string label, string brushKey)
     {

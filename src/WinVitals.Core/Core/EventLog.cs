@@ -2,10 +2,16 @@ using System.Diagnostics.Eventing.Reader;
 
 namespace WinVitals.Core;
 
-public sealed record LogEntry(DateTime When, int Id, string Provider, string Message, int Level = 0)
+public sealed record LogEntry(
+    DateTime When, int Id, string Provider, string Message, int Level = 0,
+    IReadOnlyDictionary<string, string>? Data = null)
 {
     /// <summary>True for events Windows itself classes as an error or worse.</summary>
     public bool IsError => Level is 1 or 2;
+
+    /// <summary>A named EventData value as an integer, or null.</summary>
+    public long? Number(string name) =>
+        Data is not null && Data.TryGetValue(name, out var v) && long.TryParse(v, out var n) ? n : null;
 
     /// <summary>
     /// Event log messages are wrapped and padded for a GUI. Squash them so they read
@@ -29,6 +35,9 @@ public sealed record LogEntry(DateTime When, int Id, string Provider, string Mes
 
 public static class EventLogReader
 {
+    private static readonly System.Text.RegularExpressions.Regex DataField =
+        new(@"<Data Name=""([^""]+)"">([^<]*)</Data>", System.Text.RegularExpressions.RegexOptions.Compiled);
+
     /// <summary>
     /// Reads the newest matching events, newest first.
     ///
@@ -44,8 +53,14 @@ public static class EventLogReader
     /// notices, and NTFS event 98 — "Volume is healthy, no action is needed" — will
     /// otherwise be counted as a disk error.
     /// </param>
+    /// <param name="withData">
+    /// Also parse the event's named EventData fields from its XML. Message text is
+    /// localised and its layout changes between builds; the named fields do not, so
+    /// anything numeric (a boot duration, a bug-check code) should come from here.
+    /// </param>
     public static IReadOnlyList<LogEntry> Read(
-        string logName, string provider, int[]? ids, int max, TimeSpan? within = null, int[]? levels = null)
+        string logName, string provider, int[]? ids, int max, TimeSpan? within = null, int[]? levels = null,
+        bool withData = false)
     {
         var conditions = new List<string> { $"Provider[@Name='{provider}']" };
 
@@ -80,12 +95,25 @@ public static class EventLogReader
                     try { message = rec.FormatDescription() ?? ""; }
                     catch { message = ""; }
 
+                    Dictionary<string, string>? data = null;
+                    if (withData)
+                    {
+                        try
+                        {
+                            data = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                            foreach (System.Text.RegularExpressions.Match m in DataField.Matches(rec.ToXml()))
+                                data[m.Groups[1].Value] = System.Net.WebUtility.HtmlDecode(m.Groups[2].Value);
+                        }
+                        catch { data = null; }
+                    }
+
                     list.Add(new LogEntry(
                         rec.TimeCreated?.ToLocalTime() ?? DateTime.MinValue,
                         rec.Id,
                         rec.ProviderName ?? "",
                         message,
-                        rec.Level ?? 0));
+                        rec.Level ?? 0,
+                        data));
                 }
             }
         }

@@ -37,6 +37,7 @@ offers to do something about it.
 | Module | What it looks at |
 |---|---|
 | **System & Firmware** | Model, BIOS/UEFI version and date, Windows build, uptime, Fast Startup |
+| **Startup speed** | How long the PC takes to boot from Windows' own measurements, how much of that is startup programs, and whether it is getting slower |
 | **Power & Sleep** | Sleep states, what is blocking sleep right now, scheduled wake-ups, devices armed to wake, and whether sleep actually holds |
 | **Storage** | Disk health and SMART, free space, TRIM, and which Windows features are eating the space |
 | **Battery** | Real wear against design capacity, cycle count |
@@ -50,17 +51,23 @@ offers to do something about it.
 
 ## What it can repair
 
-Sixteen repairs, each one showing its exact commands before it runs:
+Twenty-three repairs, each one showing its exact commands before it runs:
 
+- **Speed up** — turn off animations and transparency, switch to the High performance
+  power plan, stop Search indexing and SysMain thrashing a mechanical disk, and turn
+  individual sign-in programs on and off — with the boot time measured before and after
+- **Clean up** — delete temporary files, empty the Recycle Bin, reclaim the hibernation
+  file, remove the previous Windows installation, clear the update sharing cache, clean
+  up superseded update components, turn TRIM back on
 - **Power** — restore sleep timeouts, stop scheduled wake-ups, stop the network adapter
   waking the machine, turn hibernate on
-- **Storage** — delete temporary files, empty the Recycle Bin, reclaim the hibernation
-  file, turn TRIM back on
 - **Security** — turn the firewall on, switch off Remote Desktop, update antivirus
   definitions, remove shares that expose a whole drive or user profile
 - **Windows repair** — repair damaged system files (DISM then SFC, in that order and for
   a reason), reset the network stack, clear the DNS cache, clear the Windows Update cache
-- **Startup** — turn individual sign-in programs on and off
+
+A **weekly check-up** can be switched on from the Home page: a scheduled task runs the
+full scan every Sunday, keeps the report, and the dashboard shows the score.
 
 ## Four rules it follows
 
@@ -123,8 +130,9 @@ WinVitals.exe --redact           full scan, shareable report
 --only <ids>     Run only these modules, comma separated
 --skip <ids>     Run everything except these modules
 --no-open        Do not open the report when finished
---no-elevate     Do not ask for administrator rights
---gui            Force the interface (combine with --no-elevate)
+--scheduled      Write the report to WinVitals' own folder and leave a summary
+                 for the dashboard (what the weekly task runs)
+--gui            Force the interface
 --run <id>       Open the interface straight into one check
 ```
 

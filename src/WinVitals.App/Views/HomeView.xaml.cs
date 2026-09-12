@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -8,17 +9,30 @@ namespace WinVitals.App.Views;
 
 /// <summary>
 /// The dashboard: a health score from the last check-up, a few live numbers that
-/// are cheap to read, and the three things a person can do next.
+/// are cheap to read, the three things a person can do next, and the weekly
+/// check-up switch.
 /// </summary>
 public partial class HomeView : UserControl
 {
+    private UpdateCheck.Release? _update;
+
+    /// <summary>Set while code changes the weekly checkbox, so the handler does not act on it.</summary>
+    private bool _settingToggle;
+
     public HomeView()
     {
         InitializeComponent();
         BuildHealth();
         BuildRecent();
-        Loaded += (_, _) => _ = LoadStatsAsync();
+        BuildWeekly();
+        Loaded += (_, _) =>
+        {
+            _ = LoadStatsAsync();
+            _ = CheckForUpdateAsync();
+        };
     }
+
+    // ---------------------------------------------------------------- health
 
     private void BuildHealth()
     {
@@ -26,6 +40,15 @@ public partial class HomeView : UserControl
         if (scan is null)
         {
             RingHost.Content = Ui.Ring(null, 132, 11);
+
+            // No scan this session, but a scheduled one may have run recently.
+            var last = ScheduledSummary.Load();
+            if (last is not null && (DateTimeOffset.Now - last.When).TotalDays <= 8)
+            {
+                RingHost.Content = Ui.Ring(last.Score, 132, 11);
+                ScoreWord.Text = Session.ScoreWord(last.Score);
+                ScoreDetail.Text = $"From the automatic check-up on {last.When:ddd d MMM 'at' HH:mm}.";
+            }
             return;
         }
 
@@ -43,6 +66,8 @@ public partial class HomeView : UserControl
                            + (Session.LastPlaybook is { } pb && pb.Modules.Count > 0 ? $" ({pb.Title})" : "");
         ViewResultsButton.Visibility = Visibility.Visible;
     }
+
+    // ---------------------------------------------------------------- recent
 
     private void BuildRecent()
     {
@@ -65,6 +90,73 @@ public partial class HomeView : UserControl
         }
     }
 
+    // ---------------------------------------------------------------- weekly
+
+    private void BuildWeekly()
+    {
+        _settingToggle = true;
+        try
+        {
+            WeeklyToggle.IsChecked = Scheduler.IsScheduled();
+            WeeklyToggle.Content = WeeklyToggle.IsChecked == true ? "On" : "Off";
+        }
+        finally { _settingToggle = false; }
+
+        var last = ScheduledSummary.Load();
+        if (last is null) return;
+
+        WeeklyLast.Text = $"Last automatic check-up: {last.When:ddd d MMM 'at' HH:mm} — score {last.Score}, "
+                          + $"{last.Critical} critical, {last.Warning} need attention, {last.Advisory} worth knowing.";
+        WeeklyLast.Visibility = Visibility.Visible;
+        WeeklyReport.Visibility = File.Exists(last.ReportPath) ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void OnWeeklyChanged(object sender, RoutedEventArgs e)
+    {
+        if (_settingToggle) return;
+
+        var turnOn = WeeklyToggle.IsChecked == true;
+        var (ok, message) = turnOn ? Scheduler.Enable() : Scheduler.Disable();
+
+        if (!ok)
+        {
+            MessageBox.Show(Window.GetWindow(this), message, "WinVitals", MessageBoxButton.OK, MessageBoxImage.Warning);
+            _settingToggle = true;
+            try { WeeklyToggle.IsChecked = !turnOn; }
+            finally { _settingToggle = false; }
+            return;
+        }
+
+        WeeklyToggle.Content = turnOn ? "On" : "Off";
+        WeeklyText.Text = turnOn
+            ? message + " Keep WinVitals.exe where it is now, or the task will not find it."
+            : "Let WinVitals check this PC every Sunday at 10:00 and keep the report here. It only reads; nothing is changed without you.";
+    }
+
+    private void OnOpenWeeklyReport(object sender, RoutedEventArgs e)
+    {
+        var last = ScheduledSummary.Load();
+        if (last is not null && File.Exists(last.ReportPath)) Open(last.ReportPath);
+    }
+
+    // ---------------------------------------------------------------- update
+
+    private async Task CheckForUpdateAsync()
+    {
+        _update = await UpdateCheck.NewerAsync();
+        if (_update is null) return;
+
+        UpdateText.Text = $"WinVitals {_update.Tag} is available — you have {AppInfo.Version}.";
+        UpdateBanner.Visibility = Visibility.Visible;
+    }
+
+    private void OnGetUpdate(object sender, RoutedEventArgs e)
+    {
+        if (_update is not null) Open(_update.Url);
+    }
+
+    // ----------------------------------------------------------------- stats
+
     /// <summary>
     /// Four numbers that are cheap to read and mean something at a glance. Each is
     /// independent: one failing must not blank the others.
@@ -79,13 +171,8 @@ public partial class HomeView : UserControl
             ("Battery", Battery),
         };
 
-        var placeholders = new List<Border>();
         foreach (var (label, _) in tiles)
-        {
-            var tile = Ui.Stat(label, "…", "");
-            placeholders.Add(tile);
-            Stats.Children.Add(tile);
-        }
+            Stats.Children.Add(Ui.Stat(label, "…", ""));
 
         for (var i = 0; i < tiles.Length; i++)
         {
@@ -143,6 +230,8 @@ public partial class HomeView : UserControl
         return ($"{health:0}%", "of original capacity");
     }
 
+    // ------------------------------------------------------------ navigation
+
     private void OnFullCheck(object sender, RoutedEventArgs e) =>
         MainWindow.Instance?.Navigate(new ScanView(Playbooks.Full), "Checking your PC", Playbooks.Full.Title);
 
@@ -156,5 +245,11 @@ public partial class HomeView : UserControl
         if (Session.LastScan is null || Session.LastPlaybook is null) return;
         MainWindow.Instance?.Navigate(new ResultsView(Session.LastScan, Session.LastPlaybook),
             "What I found", $"From the check-up at {Session.LastScan.StartedAt:HH:mm}.");
+    }
+
+    private static void Open(string target)
+    {
+        try { Process.Start(new ProcessStartInfo { FileName = target, UseShellExecute = true }); }
+        catch (Exception ex) { Log.Warn($"Could not open {target}: {ex.Message}"); }
     }
 }

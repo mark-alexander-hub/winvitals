@@ -3,6 +3,22 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <ScrollViewer Padding="32,0,32,28">
         <StackPanel>
+
+            <!-- Update available -->
+            <Border x:Name="UpdateBanner" Style="{StaticResource Card}" Margin="0,0,0,14" Padding="16,12"
+                    Background="{DynamicResource AccentSoftBrush}" BorderBrush="{DynamicResource AccentBrush}"
+                    Visibility="Collapsed">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="UpdateText" Grid.Column="0" Style="{StaticResource Body}"
+                               VerticalAlignment="Center" Text="A newer version is available." />
+                    <Button Grid.Column="1" Style="{StaticResource Primary}" Content="Get it" Click="OnGetUpdate" />
+                </Grid>
+            </Border>
+
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="5*" />
@@ -68,13 +84,35 @@
                         <TextBlock Text="&#xEC4A;" FontFamily="{DynamicResource IconFont}" FontSize="22"
                                    Foreground="{DynamicResource AccentBrush}" />
                         <TextBlock Text="Speed up" Style="{StaticResource H2}" Margin="0,10,0,0" />
-                        <TextBlock Text="Stop programs launching at sign-in that you do not need." Style="{StaticResource Muted}" Margin="0,4,0,0" />
+                        <TextBlock Text="Measure boot time, trim what launches at sign-in." Style="{StaticResource Muted}" Margin="0,4,0,0" />
                     </StackPanel>
                 </Button>
             </UniformGrid>
 
+            <!-- Weekly check-up -->
+            <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="WEEKLY CHECK-UP" Style="{StaticResource Label}" />
+                        <TextBlock x:Name="WeeklyText" Style="{StaticResource Body}" Margin="0,6,12,0"
+                                   Text="Let WinVitals check this PC every Sunday at 10:00 and keep the report here. It only reads; nothing is changed without you." />
+                        <TextBlock x:Name="WeeklyLast" Style="{StaticResource Muted}" Margin="0,6,12,0" Visibility="Collapsed" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <CheckBox x:Name="WeeklyToggle" Style="{StaticResource Check}" Content="On"
+                                  Checked="OnWeeklyChanged" Unchecked="OnWeeklyChanged" />
+                        <Button x:Name="WeeklyReport" Style="{StaticResource Ghost}" Content="Open last report"
+                                Visibility="Collapsed" Click="OnOpenWeeklyReport" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
             <!-- Recent changes -->
-            <Border x:Name="RecentCard" Style="{StaticResource Card}" Margin="0,16,0,0" Visibility="Collapsed">
+            <Border x:Name="RecentCard" Style="{StaticResource Card}" Margin="0,12,0,0" Visibility="Collapsed">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />

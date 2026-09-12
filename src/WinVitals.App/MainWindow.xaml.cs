@@ -96,8 +96,8 @@ public partial class MainWindow : Window
                         showSpace: true, FixCategory.Storage),
                     "Clean up", "Reclaim disk space without deleting anything you saved.");
             else if (item == NavSpeedup)
-                Navigate(new StartupView(), "Speed up",
-                    "Programs that launch at sign-in are the usual reason an older PC feels slow. Turn off what you do not need.");
+                Navigate(new SpeedupView(), "Speed up",
+                    "How long this PC takes to start, what launches at sign-in, and the settings that make an older machine feel quicker.");
             else if (item == NavRepair)
                 Navigate(new ToolsView(
                         "The standard Windows repairs, each explained. Nothing runs until you confirm it.",

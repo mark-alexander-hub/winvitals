@@ -66,9 +66,17 @@ public static class Cli
         var scan = new ScanRunner(collectors).Run(ctx, AppInfo.Version, args.Redact);
         Console.Write("\r" + new string(' ', 62) + "\r");
 
-        var htmlPath = args.OutPath ?? DefaultPath("html");
+        // --scheduled is how the weekly task runs: reports go to WinVitals' own folder,
+        // a summary is left for the dashboard, and nothing pops up.
+        var scheduled = rawArgs.Any(a => a.Equals("--scheduled", StringComparison.OrdinalIgnoreCase));
+
+        var htmlPath = args.OutPath ?? (scheduled
+            ? Path.Combine(AppPaths.Reports, $"WinVitals-report-{DateTime.Now:yyyyMMdd-HHmm}.html")
+            : DefaultPath("html"));
+
         try
         {
+            Directory.CreateDirectory(Path.GetDirectoryName(htmlPath)!);
             File.WriteAllText(htmlPath, HtmlReport.Render(scan, MachineTitle(ctx.Redactor)));
         }
         catch (Exception ex)
@@ -83,8 +91,10 @@ public static class Cli
             catch (Exception ex) { Console.Error.WriteLine($"Could not write JSON: {ex.Message}"); }
         }
 
+        if (scheduled) ScheduledSummary.Save(scan, htmlPath);
+
         PrintSummary(scan, htmlPath, args);
-        if (!args.NoOpen) OpenInBrowser(htmlPath);
+        if (!args.NoOpen && !scheduled) OpenInBrowser(htmlPath);
 
         return scan.Count(Severity.Critical) > 0 ? 1 : 0;
     }
@@ -185,7 +195,8 @@ public static class Cli
               --only <ids>     Run only these modules (comma separated).
               --skip <ids>     Run everything except these modules.
               --no-open        Do not open the report when finished.
-              --no-elevate     Do not ask for administrator rights.
+              --scheduled      Write the report to WinVitals' own folder and leave a
+                               summary for the dashboard. Used by the weekly task.
               --version        Print the version.
               --help           Show this message.
 

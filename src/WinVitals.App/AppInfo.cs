@@ -5,12 +5,16 @@ namespace WinVitals.App;
 
 public static class AppInfo
 {
-    public const string Version = "0.3.0";
+    public const string Version = "0.4.0";
+
+    /// <summary>Where releases live; used by the update check and the README.</summary>
+    public const string Repository = "mark-alexander-hub/winvitals";
 
     /// <summary>Order here is the order of sections in the report and the scan.</summary>
     public static readonly ICollector[] AllCollectors =
     {
         new SystemCollector(),
+        new BootCollector(),
         new PowerCollector(),
         new StorageCollector(),
         new BatteryCollector(),

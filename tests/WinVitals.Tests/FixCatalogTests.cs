@@ -86,7 +86,7 @@ public class FixCatalogTests
     {
         var known = new[]
         {
-            "system", "power", "storage", "battery", "memory",
+            "system", "boot", "power", "storage", "battery", "memory",
             "devices", "startup", "network", "security", "updates", "reliability",
         };
 
