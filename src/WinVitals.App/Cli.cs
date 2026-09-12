@@ -1,62 +1,57 @@
+using System.IO;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using WinVitals.Collectors;
 using WinVitals.Core;
 using WinVitals.Report;
 
-namespace WinVitals;
+namespace WinVitals.App;
 
-public static class Program
+/// <summary>
+/// The command-line half of WinVitals: scan, write a report, exit.
+///
+/// Read-only by design. Repairs are only offered through the interface, where the
+/// consequences and the undo can be shown before anything happens.
+/// </summary>
+public static class Cli
 {
-    public const string Version = "0.1.0";
-
-    /// <summary>Order here is the order of sections in the report.</summary>
-    private static readonly ICollector[] AllCollectors =
-    {
-        new SystemCollector(),
-        new PowerCollector(),
-        new StorageCollector(),
-        new BatteryCollector(),
-        new MemoryCollector(),
-        new DeviceCollector(),
-        new StartupCollector(),
-        new NetworkCollector(),
-        new SecurityCollector(),
-        new UpdateCollector(),
-        new ReliabilityCollector(),
-    };
-
-    public static int Main(string[] rawArgs)
+    public static int Run(string[] rawArgs)
     {
         var args = Options.Parse(rawArgs);
 
         if (args.ShowHelp) { PrintHelp(); return 0; }
-        if (args.ShowVersion) { Console.WriteLine($"WinVitals {Version}"); return 0; }
+        if (args.ShowVersion) { Console.WriteLine($"WinVitals {AppInfo.Version}"); return 0; }
 
-        Console.OutputEncoding = System.Text.Encoding.UTF8;
+        try { Console.OutputEncoding = System.Text.Encoding.UTF8; } catch { /* redirected */ }
+
         Banner();
 
         var elevated = ScanContext.IsElevated();
-
-        // Relaunch elevated once, unless told not to. Several of the most useful checks
-        // (what is blocking sleep, what is scheduled to wake the machine, disk health)
-        // return nothing at all to a standard user, and a scan that silently skips them
-        // tells people their machine is fine when it has not been looked at.
         if (!elevated && !args.NoElevate)
         {
-            if (TryRelaunchElevated(rawArgs, out var childExit))
-                return childExit;
-
+            if (TryRelaunchElevated(rawArgs, out var childExit)) return childExit;
             Console.WriteLine("  Continuing without administrator rights — some checks will be skipped.");
             Console.WriteLine();
         }
 
-        var collectors = SelectCollectors(args);
+        var playbook = args.Playbook is null ? Playbooks.Full : Playbooks.ById(args.Playbook);
+        if (playbook is null)
+        {
+            Console.Error.WriteLine($"Unknown check '{args.Playbook}'. Available: "
+                                    + string.Join(", ", Playbooks.All.Select(p => p.Id)));
+            return 2;
+        }
+
+        var collectors = AppInfo.CollectorsFor(playbook);
+        if (args.Only.Count > 0)
+            collectors = collectors.Where(c => args.Only.Contains(c.Id, StringComparer.OrdinalIgnoreCase)).ToList();
+        if (args.Skip.Count > 0)
+            collectors = collectors.Where(c => !args.Skip.Contains(c.Id, StringComparer.OrdinalIgnoreCase)).ToList();
+
         if (collectors.Count == 0)
         {
-            Console.Error.WriteLine("No modules selected. Available: " +
-                string.Join(", ", AllCollectors.Select(c => c.Id)));
+            Console.Error.WriteLine("No modules selected. Available: "
+                                    + string.Join(", ", AppInfo.AllCollectors.Select(c => c.Id)));
             return 2;
         }
 
@@ -67,15 +62,13 @@ public static class Program
             Progress = s => Console.Write($"\r  checking {s,-48}"),
         };
 
-        var scan = new ScanRunner(collectors).Run(ctx, Version, args.Redact);
+        var scan = new ScanRunner(collectors).Run(ctx, AppInfo.Version, args.Redact);
         Console.Write("\r" + new string(' ', 62) + "\r");
 
-        var title = MachineTitle(ctx.Redactor);
         var htmlPath = args.OutPath ?? DefaultPath("html");
-
         try
         {
-            File.WriteAllText(htmlPath, HtmlReport.Render(scan, title));
+            File.WriteAllText(htmlPath, HtmlReport.Render(scan, MachineTitle(ctx.Redactor)));
         }
         catch (Exception ex)
         {
@@ -85,21 +78,13 @@ public static class Program
 
         if (args.JsonPath is not null)
         {
-            try
-            {
-                File.WriteAllText(args.JsonPath, JsonSerializer.Serialize(scan, JsonOptions));
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"Could not write JSON to {args.JsonPath}: {ex.Message}");
-            }
+            try { File.WriteAllText(args.JsonPath, JsonSerializer.Serialize(scan, JsonOptions)); }
+            catch (Exception ex) { Console.Error.WriteLine($"Could not write JSON: {ex.Message}"); }
         }
 
         PrintSummary(scan, htmlPath, args);
-
         if (!args.NoOpen) OpenInBrowser(htmlPath);
 
-        // Exit code is useful in scripts: 1 if anything needs attention.
         return scan.Count(Severity.Critical) > 0 ? 1 : 0;
     }
 
@@ -110,21 +95,11 @@ public static class Program
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
-    private static List<ICollector> SelectCollectors(Options args)
-    {
-        IEnumerable<ICollector> set = AllCollectors;
-        if (args.Only.Count > 0)
-            set = set.Where(c => args.Only.Contains(c.Id, StringComparer.OrdinalIgnoreCase));
-        if (args.Skip.Count > 0)
-            set = set.Where(c => !args.Skip.Contains(c.Id, StringComparer.OrdinalIgnoreCase));
-        return set.ToList();
-    }
-
     private static void Banner()
     {
         Console.WriteLine();
-        Console.WriteLine($"  WinVitals {Version} — read-only laptop check-up");
-        Console.WriteLine("  Nothing on this machine will be changed.");
+        Console.WriteLine($"  WinVitals {AppInfo.Version} — read-only check-up");
+        Console.WriteLine("  Nothing on this machine will be changed. Run without arguments for the repair interface.");
         Console.WriteLine();
     }
 
@@ -132,17 +107,17 @@ public static class Program
     {
         var crit = scan.Count(Severity.Critical);
         var warn = scan.Count(Severity.Warning);
-        var adv = scan.Count(Severity.Advisory);
-        var ok = scan.Count(Severity.Ok);
-        var unk = scan.Count(Severity.Unknown);
 
         Console.WriteLine($"  Done in {scan.Duration.TotalSeconds:0.#}s.");
         Console.WriteLine();
         Console.WriteLine($"    {crit,3}  critical");
         Console.WriteLine($"    {warn,3}  warnings");
-        Console.WriteLine($"    {adv,3}  advisories");
-        Console.WriteLine($"    {ok,3}  healthy");
-        if (unk > 0) Console.WriteLine($"    {unk,3}  not checked{(scan.Elevated ? "" : " (needs administrator)")}");
+        Console.WriteLine($"    {scan.Count(Severity.Advisory),3}  advisories");
+        Console.WriteLine($"    {scan.Count(Severity.Ok),3}  healthy");
+
+        var unknown = scan.Count(Severity.Unknown);
+        if (unknown > 0)
+            Console.WriteLine($"    {unknown,3}  not checked{(scan.Elevated ? "" : " (needs administrator)")}");
         Console.WriteLine();
 
         foreach (var f in scan.AllFindings
@@ -165,22 +140,17 @@ public static class Program
     private static string MachineTitle(Redactor redactor)
     {
         var cs = Wmi.First("SELECT Manufacturer, Model FROM Win32_ComputerSystem");
-        var maker = cs?.Str("Manufacturer") ?? "";
-        var model = cs?.Str("Model") ?? "";
+        var hardware = string.Join(" ", new[] { cs?.Str("Manufacturer") ?? "", cs?.Str("Model") ?? "" }
+            .Where(s => s.Length > 0));
         var name = redactor.Apply(Environment.MachineName) ?? Environment.MachineName;
-
-        var hardware = string.Join(" ", new[] { maker, model }.Where(s => s.Length > 0));
         return hardware.Length > 0 ? $"{hardware} ({name})" : name;
     }
 
     private static string DefaultPath(string extension)
     {
-        var stamp = DateTime.Now.ToString("yyyyMMdd-HHmm");
-        var name = $"WinVitals-report-{stamp}.{extension}";
-
+        var name = $"WinVitals-report-{DateTime.Now:yyyyMMdd-HHmm}.{extension}";
         var desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-        var dir = Directory.Exists(desktop) ? desktop : Directory.GetCurrentDirectory();
-        return Path.Combine(dir, name);
+        return Path.Combine(Directory.Exists(desktop) ? desktop : Directory.GetCurrentDirectory(), name);
     }
 
     private static bool TryRelaunchElevated(string[] rawArgs, out int exitCode)
@@ -196,7 +166,7 @@ public static class Program
             FileName = exe,
             UseShellExecute = true,
             Verb = "runas",
-            Arguments = string.Join(" ", rawArgs.Select(Quote).Append("--no-elevate")),
+            Arguments = string.Join(" ", rawArgs.Select(a => a.Contains(' ') ? $"\"{a}\"" : a).Append("--no-elevate")),
         };
 
         try
@@ -207,24 +177,16 @@ public static class Program
             exitCode = p.ExitCode;
             return true;
         }
-        catch (Exception)
+        catch
         {
-            // Almost always the user clicking No on the UAC prompt. That is a valid
-            // choice, so fall through to a reduced scan rather than refusing to run.
             Console.WriteLine("  Elevation declined.");
             return false;
         }
     }
 
-    private static string Quote(string arg) =>
-        arg.Contains(' ') ? $"\"{arg}\"" : arg;
-
     private static void OpenInBrowser(string path)
     {
-        try
-        {
-            Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true });
-        }
+        try { Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true }); }
         catch (Exception ex)
         {
             Console.WriteLine($"  Could not open the report automatically ({ex.Message}). Open it yourself:");
@@ -235,34 +197,33 @@ public static class Program
     private static void PrintHelp()
     {
         Console.WriteLine($"""
-            WinVitals {Version} — a read-only check-up for a Windows laptop.
+            WinVitals {AppInfo.Version} — check-up and repair for a Windows PC.
 
-            It looks at power and sleep, storage, battery, startup, drivers, security
-            and reliability, then writes one self-contained HTML report explaining what
-            it found, why each thing matters, and what you can do about it.
-
-            WinVitals never changes anything. Where a fix exists it shows you the exact
-            command, plus the command that undoes it.
+            Run it with no arguments for the full interface, which can also repair what
+            it finds. Run it with arguments for a read-only scan that writes a report.
 
             USAGE
-              WinVitals.exe [options]
+              WinVitals.exe                    open the interface
+              WinVitals.exe [options]          scan and write a report
 
             OPTIONS
-              --out <path>     Where to write the HTML report.
-                               Default: a timestamped file on your Desktop.
+              --check <id>     Run one symptom check instead of everything.
+              --out <path>     Where to write the HTML report (default: Desktop).
               --json <path>    Also write the findings as JSON.
               --redact         Replace username, machine name, serial, MAC and IP with
                                placeholders so the report is safe to post publicly.
               --only <ids>     Run only these modules (comma separated).
               --skip <ids>     Run everything except these modules.
-              --no-open        Do not open the report in a browser when finished.
-              --no-elevate     Do not ask for administrator rights. Some checks will
-                               be skipped and the report will say which.
-              --version        Print the version and exit.
+              --no-open        Do not open the report when finished.
+              --no-elevate     Do not ask for administrator rights.
+              --version        Print the version.
               --help           Show this message.
 
-            MODULES
-              {string.Join("\n  ", AllCollectors.Select(c => $"{c.Id,-10} {c.Blurb}"))}
+            CHECKS (--check)
+              {string.Join("\n  ", Playbooks.All.Select(p => $"{p.Id,-10} {p.Title}"))}
+
+            MODULES (--only / --skip)
+              {string.Join("\n  ", AppInfo.AllCollectors.Select(c => $"{c.Id,-10} {c.Blurb}"))}
 
             EXIT CODES
               0  finished; nothing critical
@@ -273,7 +234,6 @@ public static class Program
     }
 }
 
-/// <summary>Command line options. Kept deliberately small and forgiving.</summary>
 public sealed class Options
 {
     public bool ShowHelp { get; private set; }
@@ -283,6 +243,7 @@ public sealed class Options
     public bool NoElevate { get; private set; }
     public string? OutPath { get; private set; }
     public string? JsonPath { get; private set; }
+    public string? Playbook { get; private set; }
     public List<string> Only { get; } = new();
     public List<string> Skip { get; } = new();
 
@@ -304,11 +265,11 @@ public sealed class Options
                 case "--no-elevate": o.NoElevate = true; break;
                 case "--out": o.OutPath = Next(); break;
                 case "--json": o.JsonPath = Next() ?? "winvitals.json"; break;
+                case "--check": o.Playbook = Next(); break;
                 case "--only": o.Only.AddRange(Split(Next())); break;
                 case "--skip": o.Skip.AddRange(Split(Next())); break;
                 default:
-                    if (a.Length > 0 && !a.StartsWith('-'))
-                        o.OutPath ??= a; // bare path is treated as --out
+                    if (a.Length > 0 && !a.StartsWith('-')) o.OutPath ??= a;
                     break;
             }
         }

@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../src/WinVitals/WinVitals.csproj" />
+    <ProjectReference Include="../../src/WinVitals.Core/WinVitals.Core.csproj" />
   </ItemGroup>
 
 </Project>

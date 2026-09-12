@@ -21,7 +21,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $root    = $PSScriptRoot
-$project = Join-Path $root 'src/WinVitals/WinVitals.csproj'
+$project = Join-Path $root 'src/WinVitals.App/WinVitals.App.csproj'
 $dist    = Join-Path $root 'dist'
 
 # dotnet is not on PATH in a shell opened before the SDK was installed.

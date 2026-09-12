@@ -1,0 +1,35 @@
+<UserControl x:Class="WinVitals.App.Views.ApplyView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid Margin="28,0,28,0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Style="{StaticResource Card}" Margin="0,0,0,14">
+            <StackPanel>
+                <TextBlock x:Name="StatusText" Style="{StaticResource H2}" Text="Starting..." />
+                <ProgressBar x:Name="Progress" Style="{StaticResource Bar}" Margin="0,14,0,0"
+                             Minimum="0" Maximum="100" Value="0" />
+                <TextBlock x:Name="DetailText" Style="{StaticResource Muted}" Margin="0,10,0,0"
+                           Text="Please leave this window open." />
+            </StackPanel>
+        </Border>
+
+        <ScrollViewer Grid.Row="1" Padding="0,0,0,14">
+            <StackPanel x:Name="StepHost" />
+        </ScrollViewer>
+
+        <StackPanel x:Name="FooterButtons" Grid.Row="2" Orientation="Horizontal"
+                    HorizontalAlignment="Right" Margin="0,0,0,24" Visibility="Collapsed">
+            <Button x:Name="UndoButton" Style="{StaticResource Secondary}" Content="Undo these changes"
+                    Margin="0,0,8,0" Click="OnUndo" />
+            <Button x:Name="RestartButton" Style="{StaticResource Secondary}" Content="Restart now"
+                    Margin="0,0,8,0" Visibility="Collapsed" Click="OnRestart" />
+            <Button Style="{StaticResource Primary}" Content="Done" Click="OnDone" />
+        </StackPanel>
+    </Grid>
+</UserControl>

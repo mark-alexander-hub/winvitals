@@ -215,22 +215,9 @@ public sealed class PowerCollector : ICollector
     /// <summary>Reads one power setting's AC and DC value in seconds. -1 when unreadable.</summary>
     private static int ReadSetting(string subgroup, string setting, out int dc)
     {
-        dc = -1;
-        var res = Shell.PowerCfg($"/q SCHEME_CURRENT {subgroup} {setting}");
-        if (!res.Ok) return -1;
-
-        int ac = -1;
-        foreach (var line in res.Lines)
-        {
-            var match = HexIndex.Match(line);
-            if (!match.Success) continue;
-            if (!int.TryParse(match.Groups[1].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var v))
-                continue;
-
-            if (line.Contains("Current AC Power Setting Index", StringComparison.OrdinalIgnoreCase)) ac = v;
-            else if (line.Contains("Current DC Power Setting Index", StringComparison.OrdinalIgnoreCase)) dc = v;
-        }
-        return ac;
+        var values = PowerSettings.Read(subgroup, setting);
+        dc = values.Dc;
+        return values.Ac;
     }
 
     // ------------------------------------------------------------- requests

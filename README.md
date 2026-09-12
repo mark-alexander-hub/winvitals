@@ -1,32 +1,30 @@
 # WinVitals
 
-A read-only check-up for a Windows laptop. It looks at the whole machine, then writes
-one self-contained HTML report that explains, in plain English, what it found, why each
-thing matters, and what you can do about it.
+A check-up and repair tool for a Windows PC, written for people who are not technical.
 
-It does not change anything on your computer.
+You tell it what is wrong in plain words — *"it won't sleep"*, *"my PC is slow"*, *"the
+battery doesn't last"* — and it checks the right things, explains what it found, and
+offers to fix it. Every repair shows you exactly what it will do before it does it, and
+every repair can be undone.
 
-```
-WinVitals.exe
-```
+![WinVitals](docs/screenshot-home.png)
 
-That is the whole thing. Double-click it, accept the elevation prompt, and a report
-opens in your browser.
+Download `WinVitals.exe`, run it, accept the prompt. There is nothing to install.
 
 ---
 
 ## Why this exists
 
-The information needed to explain a misbehaving Windows laptop already exists on the
-machine. It is just scattered across `powercfg`, Device Manager, the event log, WMI and
-half a dozen Settings pages, several of which need administrator rights and none of
-which talk to each other.
+Everything needed to explain a misbehaving Windows PC is already on the machine. It is
+just scattered across `powercfg`, Device Manager, the event log, WMI and a dozen
+Settings pages, several of which need administrator rights and none of which talk to
+each other.
 
-So when a laptop wakes up in a bag, or will not sleep, or has quietly filled its second
-drive, the answer is usually a forum thread telling you to run four commands and
-interpret the output yourself.
+So when a laptop wakes up in a bag, or fills its second drive on its own, the answer is
+a forum thread telling you to run four commands and work out what the output means.
 
-WinVitals runs those commands, joins them up, and writes down what they mean.
+WinVitals runs those commands, joins them up, writes down what they mean, and then
+offers to do something about it.
 
 ## What it checks
 
@@ -44,14 +42,28 @@ WinVitals runs those commands, joins them up, and writes down what they mean.
 | **Updates & Recovery** | Patch level, deferred restarts, and whether a usable restore point exists |
 | **Crashes & Stability** | Blue screens, unexpected shutdowns, hardware errors, repeat app crashes, disk errors |
 
-## Three rules it follows
+## What it can repair
+
+Sixteen repairs, each one showing its exact commands before it runs:
+
+- **Power** — restore sleep timeouts, stop scheduled wake-ups, stop the network adapter
+  waking the machine, turn hibernate on
+- **Storage** — delete temporary files, empty the Recycle Bin, reclaim the hibernation
+  file, turn TRIM back on
+- **Security** — turn the firewall on, switch off Remote Desktop, update antivirus
+  definitions, remove shares that expose a whole drive or user profile
+- **Windows repair** — repair damaged system files (DISM then SFC, in that order and for
+  a reason), reset the network stack, clear the DNS cache, clear the Windows Update cache
+- **Startup** — turn individual sign-in programs on and off
+
+## Four rules it follows
 
 These are the reasons to use this rather than a "PC health" tool.
 
 **1. It never says something is out of date unless it knows.**
 
-WinVitals will not tell you a BIOS or a driver is old. It reports the version and date
-it found and links the vendor's own download page. Offline guesses about what is current
+WinVitals will not tell you a BIOS or driver is old. It reports the version and date it
+found and links the vendor's own download page. Offline guesses about what is current
 are wrong often enough to send people hunting for updates that do not exist, or to
 "update" a driver to something older and generic. A 2022 driver is frequently the last
 one the vendor ever shipped.
@@ -61,67 +73,81 @@ one the vendor ever shipped.
 Several checks — what is blocking sleep, disk SMART data, whether you have a restore
 point — return access-denied to a standard user. A tool that swallows that error reports
 a clean bill of health for a machine it never examined. Every check that could not run
-says so, and the report counts them separately.
+says so, and the summary counts them separately.
 
-**3. It never changes anything.**
+**3. It takes a restore point, then checks that the restore point exists.**
 
-Where a fix exists, WinVitals shows you the exact command and, whenever that command
-changes a setting, the command that puts it back. You run it. Nothing is applied for
-you, and nothing is applied silently.
+Windows silently refuses to create a restore point if another was made in the last 24
+hours: the call returns success and nothing is created. Every script that creates one
+without verifying afterwards is lying to its user some of the time. WinVitals suspends
+that throttle, creates the point, counts the restore points again, and tells you plainly
+if it did not work — *before* changing anything, not after.
+
+**4. Every change is reversible, and the record survives a reboot.**
+
+Undo information is captured before a change is applied and written to disk immediately,
+not held in memory. The cases where somebody needs to undo something are exactly the
+cases where the machine has been restarted since. The Undo screen lists everything
+WinVitals has ever changed on the machine, with a button to put each of it back.
+
+Repairs that genuinely cannot be undone — deleting temporary files, emptying the Recycle
+Bin — are marked as permanent and are never included in the one-click batch.
 
 ## Sharing a report
 
-Reports end up pasted into forum threads and support tickets. So:
+Reports end up pasted into forum threads and support tickets, so the Save Report button
+offers to strip your username, PC name, hardware serial, MAC and IP addresses first. On
+the command line that is `--redact`. It is a best-effort text filter rather than a
+guarantee, and the report says so at the bottom.
+
+## Command line
+
+Running with any argument gives a read-only scan and an HTML report. Repairs are only
+offered in the interface, where the consequences and the undo can be shown first.
 
 ```
-WinVitals.exe --redact
-```
+WinVitals.exe                    open the interface
+WinVitals.exe --check sleep      scan just the sleep checks, write a report
+WinVitals.exe --redact           full scan, shareable report
 
-replaces your username, machine name, hardware serial, MAC and IP addresses with
-placeholders. It is a best-effort text filter rather than a guarantee, and the report
-says so at the bottom — give it a skim before posting.
-
-## Options
-
-```
---out <path>     Where to write the HTML report (default: your Desktop)
+--check <id>     Run one symptom check instead of everything
+--out <path>     Where to write the HTML report (default: Desktop)
 --json <path>    Also write the findings as JSON
 --redact         Strip identifying details so the report is safe to share
 --only <ids>     Run only these modules, comma separated
 --skip <ids>     Run everything except these modules
 --no-open        Do not open the report when finished
 --no-elevate     Do not ask for administrator rights
---version        Print version
---help           Full help
+--gui            Force the interface (combine with --no-elevate)
+--run <id>       Open the interface straight into one check
 ```
 
-Module ids: `system power storage battery memory devices startup network security
-updates reliability`
+Checks: `full slow sleep battery network crash space security`
+
+Modules: `system power storage battery memory devices startup network security updates
+reliability`
 
 Exit codes: `0` nothing critical, `1` at least one critical finding, `2` bad arguments,
 `3` could not write the report.
 
 ## Administrator rights
 
-WinVitals asks for elevation and will run without it if you say no.
+WinVitals asks for elevation on startup and runs without it if you say no.
 
-It asks because these checks return nothing at all to a standard user:
+It asks because these return nothing at all to a standard user: what is holding the
+machine awake, what is scheduled to wake it, the drive's own failure prediction,
+BitLocker status, and whether any restore point exists. No repair can be applied
+without it either.
 
-- what is holding the machine awake right now (`powercfg /requests`)
-- what is scheduled to wake it (`powercfg /waketimers`)
-- the drive's own failure prediction (SMART)
-- BitLocker status
-- whether any restore point exists
-
-Decline and you still get a useful scan. The report will tell you exactly which checks
-were skipped, and the summary counts them under "not checked".
+Decline and you still get a useful scan, with a banner saying what is unavailable and
+the skipped checks counted under "not checked".
 
 ## Building it yourself
 
 Needs the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 
 ```
-git clone https://github.com/<you>/winvitals
+git clone https://github.com/mark-alexander-hub/winvitals
 cd winvitals
 ./build.ps1
 ```
@@ -129,29 +155,29 @@ cd winvitals
 The single-file executable lands in `dist/WinVitals.exe`. It is self-contained, so it
 runs on a machine with no .NET installed.
 
-For a normal debug build:
-
 ```
-dotnet run --project src/WinVitals -- --no-elevate --no-open --out report.html
-```
-
-Tests:
-
-```
+dotnet run --project src/WinVitals.App -- --no-elevate --no-open --out report.html
 dotnet test tests/WinVitals.Tests
 ```
 
 The parser tests are pinned against verbatim `powercfg` output captured from real
-machines, tabs and all. These formats are undocumented and vary by sleep model, so
-they are tested against reality rather than against what the documentation implies.
+machines, tabs and all. These formats are undocumented and vary by sleep model, so they
+are tested against reality rather than against what the documentation implies.
+
+## Layout
+
+```
+src/WinVitals.Core/     collectors, the report writer, and the repair engine
+  Collectors/           one file per module
+  Remediation/          fixes, the undo journal, the restore-point guard
+src/WinVitals.App/      the WPF interface and the command line
+tests/WinVitals.Tests/  parser and redaction tests
+```
 
 ## Adding a check
 
-Collectors are independent and small. Implement `ICollector`, add it to the array in
-`Program.cs`, and you are done.
-
-Every finding carries four things, and a pull request that omits any of them will be
-asked for it:
+Implement `ICollector`, add it to the array in `AppInfo.cs`. Every finding carries four
+things, and a pull request that omits any of them will be asked for it:
 
 - **What** is literally true on this machine
 - **Why** that matters, so the reader can decide whether to care
@@ -161,13 +187,23 @@ asked for it:
 The evidence requirement is the important one. WinVitals does not ask to be trusted; it
 shows its working.
 
+## Adding a repair
+
+Implement `IFix`, add it to `FixCatalog`. The contract:
+
+- Capture undo information *before* making the change
+- Return it even on partial failure — a repair that got halfway still changed something
+- Set `Reversible = false` honestly if it cannot be undone; the interface will keep it
+  out of the one-click batch
+- `Risk` decides whether it can be bundled or must be confirmed individually
+
 ## Contributing
 
 Issues and pull requests welcome. Especially useful:
 
 - Machines where a check reports something wrong — please attach a `--redact`ed report
 - Hardware where WMI returns something unexpected (OEM firmware is endlessly creative)
-- Checks that would have saved you an afternoon
+- Checks or repairs that would have saved you an afternoon
 
 ## Licence
 

@@ -1,13 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyName>WinVitals</AssemblyName>
-    <RootNamespace>WinVitals</RootNamespace>
     <LangVersion>latest</LangVersion>
+
+    <AssemblyName>WinVitals</AssemblyName>
+    <RootNamespace>WinVitals.App</RootNamespace>
 
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>true</SelfContained>
@@ -19,22 +21,15 @@
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
 
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Product>WinVitals</Product>
-    <Description>Read-only Windows laptop diagnostic that explains findings in plain English.</Description>
+    <Description>Diagnose and repair a Windows PC, in plain English.</Description>
     <Company>WinVitals contributors</Company>
     <Copyright>Copyright (c) 2026 WinVitals contributors</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
-    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
-      <_Parameter1>WinVitals.Tests</_Parameter1>
-    </AssemblyAttribute>
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="System.Management" Version="8.0.0" />
-    <PackageReference Include="System.Diagnostics.EventLog" Version="8.0.1" />
+    <ProjectReference Include="../WinVitals.Core/WinVitals.Core.csproj" />
   </ItemGroup>
 
 </Project>

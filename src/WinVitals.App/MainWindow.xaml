@@ -1,0 +1,60 @@
+<Window x:Class="WinVitals.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="WinVitals" Height="760" Width="920" MinHeight="560" MinWidth="720"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource BgBrush}"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Ideal">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="28,22,28,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="WINVITALS" FontSize="11" FontWeight="Bold"
+                           Foreground="{DynamicResource MutedBrush}" />
+                <TextBlock x:Name="HeaderTitle" Style="{StaticResource H1}"
+                           Text="What can I help with?" Margin="0,4,0,0" />
+                <TextBlock x:Name="HeaderSubtitle" Style="{StaticResource Muted}"
+                           Text="Pick what is wrong and WinVitals will check it, explain what it finds, and offer to fix it."
+                           Margin="0,4,0,0" />
+            </StackPanel>
+
+            <Button x:Name="BackButton" Grid.Column="1" Style="{StaticResource Secondary}"
+                    Content="Start over" VerticalAlignment="Top" Visibility="Collapsed"
+                    Click="OnBack" />
+        </Grid>
+
+        <!-- Elevation banner -->
+        <Border x:Name="AdminBanner" Grid.Row="1" Margin="28,0,28,12"
+                Background="{DynamicResource WarningSoftBrush}"
+                BorderBrush="{DynamicResource WarningBrush}" BorderThickness="1"
+                CornerRadius="8" Padding="14,10" Visibility="Collapsed">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" VerticalAlignment="Center" TextWrapping="Wrap"
+                           Foreground="{DynamicResource WarningBrush}" FontSize="13"
+                           Text="Running without administrator rights. Some checks cannot run and no repairs can be applied." />
+                <Button Grid.Column="1" Style="{StaticResource Secondary}" Margin="12,0,0,0"
+                        Content="Restart as administrator" Click="OnElevate" />
+            </Grid>
+        </Border>
+
+        <!-- Page host -->
+        <ContentControl x:Name="PageHost" Grid.Row="2" Margin="0,0,0,0" />
+    </Grid>
+</Window>

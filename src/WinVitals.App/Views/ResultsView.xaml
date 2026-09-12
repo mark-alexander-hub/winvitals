@@ -1,0 +1,44 @@
+<UserControl x:Class="WinVitals.App.Views.ResultsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid Margin="28,0,28,0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Severity tiles -->
+        <UniformGrid x:Name="Tiles" Grid.Row="0" Rows="1" Margin="0,0,0,14" />
+
+        <!-- Action bar -->
+        <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,0,0,14" Padding="16,13">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock x:Name="ActionHeadline" Style="{StaticResource H2}" FontSize="16"
+                               Text="Ready to fix" />
+                    <TextBlock x:Name="ActionDetail" Style="{StaticResource Muted}" Margin="0,2,12,0"
+                               Text="" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button x:Name="SaveReportButton" Style="{StaticResource Secondary}"
+                            Content="Save report" Margin="0,0,8,0" Click="OnSaveReport" />
+                    <Button x:Name="FixAllButton" Style="{StaticResource Primary}"
+                            Content="Fix what's safe" Click="OnFixAll" Visibility="Collapsed" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Findings -->
+        <ScrollViewer Grid.Row="2" Padding="0,0,0,28">
+            <StackPanel x:Name="FindingsHost" />
+        </ScrollViewer>
+    </Grid>
+</UserControl>
