@@ -1,0 +1,10 @@
+bin/
+obj/
+dist/
+*.user
+*.suo
+.vs/
+.idea/
+*.html
+!docs/**/*.html
+*.winvitals.json
