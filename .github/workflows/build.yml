@@ -1,0 +1,116 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    permissions:
+      # Attaching the executable to a release needs write; the default for new
+      # repositories is read-only.
+      contents: write
+      # SignPath downloads the build artifact from this run through the workflow
+      # token, which needs to be able to read it.
+      actions: read
+
+    env:
+      # Signing steps activate only when their secrets are configured. Forks and
+      # pull requests never have the secrets, so they build unsigned.
+      SIGNPATH_CONFIGURED: ${{ secrets.SIGNPATH_API_TOKEN != '' }}
+      AZURE_SIGNING_CONFIGURED: ${{ secrets.AZURE_TENANT_ID != '' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build
+        run: dotnet build src/WinVitals.App/WinVitals.App.csproj --configuration Release
+
+      - name: Test
+        run: dotnet test tests/WinVitals.Tests/WinVitals.Tests.csproj --configuration Release
+
+      - name: Smoke test
+        # The scan must complete on a clean runner without elevation and without
+        # crashing any collector. --no-elevate keeps it non-interactive.
+        run: |
+          dotnet run --project src/WinVitals.App --configuration Release --no-build -- `
+            --no-elevate --no-open --redact --out report.html --json report.json
+          if (-not (Test-Path report.html)) { throw "no HTML report produced" }
+          if (-not (Test-Path report.json)) { throw "no JSON report produced" }
+          $findings = (Get-Content report.json -Raw | ConvertFrom-Json).Modules.Findings
+          Write-Host "produced $($findings.Count) findings across all modules"
+          if ($findings.Count -lt 1) { throw "scan produced no findings at all" }
+
+      - name: Publish single file
+        run: ./build.ps1
+
+      # The unsigned build is uploaded first because SignPath signs a GitHub artifact
+      # produced in this same run — that is how it ties the signature to public CI.
+      - name: Upload unsigned build
+        id: unsigned
+        uses: actions/upload-artifact@v4
+        with:
+          name: WinVitals-unsigned
+          path: dist/WinVitals.exe
+
+      # SignPath Foundation: release tags only. Each request waits for the
+      # maintainer's approval in the SignPath dashboard (up to an hour here).
+      - name: Sign with SignPath Foundation
+        if: env.SIGNPATH_CONFIGURED == 'true' && startsWith(github.ref, 'refs/tags/v')
+        uses: SignPath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: winvitals
+          signing-policy-slug: release-signing
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 3600
+          output-artifact-directory: dist/signed
+
+      - name: Use the signed executable
+        if: env.SIGNPATH_CONFIGURED == 'true' && startsWith(github.ref, 'refs/tags/v')
+        run: Copy-Item dist/signed/WinVitals.exe dist/WinVitals.exe -Force
+
+      # Alternative route, dormant unless its secrets exist.
+      - name: Sign with Azure Trusted Signing
+        if: env.AZURE_SIGNING_CONFIGURED == 'true'
+        uses: azure/trusted-signing-action@v0
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          endpoint: ${{ secrets.AZURE_SIGNING_ENDPOINT }}
+          trusted-signing-account-name: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ secrets.AZURE_SIGNING_PROFILE }}
+          files-folder: dist
+          files-folder-filter: exe
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+
+      - name: Report signature state
+        run: |
+          $sig = Get-AuthenticodeSignature dist/WinVitals.exe
+          $who = if ($sig.SignerCertificate) { $sig.SignerCertificate.Subject } else { 'none' }
+          Write-Host "Signature: $($sig.Status)  Signer: $who"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WinVitals
+          path: dist/WinVitals.exe
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/WinVitals.exe
