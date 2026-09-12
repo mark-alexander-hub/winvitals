@@ -34,7 +34,9 @@
          interface can be driven by automated tests without a UAC prompt per run. -->
     <ApplicationManifest Condition="'$(Configuration)' == 'Debug'">app.debug.manifest</ApplicationManifest>
     <ApplicationManifest Condition="'$(Configuration)' != 'Debug'">app.manifest</ApplicationManifest>
-    <Version>0.3.0</Version>
+    <!-- Keep in step with AppInfo.Version: this one goes into the file's properties
+         and the update check compares the other against GitHub. -->
+    <Version>0.4.0</Version>
     <Product>WinVitals</Product>
     <Description>Diagnose, clean up and speed up a Windows PC, in plain English.</Description>
     <Company>Mark Isidore Nicholas Alexander</Company>
