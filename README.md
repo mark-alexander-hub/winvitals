@@ -1,6 +1,12 @@
+<img src="docs/logo.png" width="96" alt="" align="left" />
+
 # WinVitals
 
-A check-up and repair tool for a Windows PC, written for people who are not technical.
+Diagnose, clean up and speed up a Windows PC — written for people who are not technical.
+
+<br clear="left" />
+
+A check-up and repair tool for a Windows PC.
 
 You tell it what is wrong in plain words — *"it won't sleep"*, *"my PC is slow"*, *"the
 battery doesn't last"* — and it checks the right things, explains what it found, and
@@ -143,6 +149,26 @@ version that ran unelevated would be a worse tool with a banner apologising for 
 Debug builds are the one exception: they run as whoever launched them, so the interface
 can be driven by automated tests without a UAC prompt per run. They say so in the
 corner of the window.
+
+## Signing
+
+An unsigned build shows **"Unknown publisher"** on the UAC prompt and a SmartScreen
+warning on first run. That is Windows doing its job: nothing vouches for the file. Only
+an Authenticode signature from a certificate authority changes it — setting the
+company name in the file's properties does not.
+
+Options, cheapest workable first:
+
+- **SignPath Foundation** — free code-signing for open-source projects that build in
+  public CI. The right fit once this repository is public.
+- **Azure Trusted Signing** — Microsoft's service, about US$10 a month, open to
+  individual developers after identity verification. The workflow already contains a
+  signing step that activates when the `AZURE_*` secrets are set.
+- **A conventional OV/EV certificate** — US$100–400 a year. `./build.ps1 -Sign` signs
+  with a `.pfx` given by `WINVITALS_PFX` / `WINVITALS_PFX_PASSWORD`.
+
+SmartScreen reputation is separate from the signature and is earned by downloads over
+time; an EV certificate skips that wait, the others do not.
 
 ## Building it yourself
 
