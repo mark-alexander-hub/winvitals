@@ -15,7 +15,7 @@ every repair can be undone.
 
 ![WinVitals](docs/screenshot-home.png)
 
-Download `WinVitals.exe`, run it, accept the prompt. There is nothing to install.
+**[Download `WinVitals.exe`](https://github.com/mark-alexander-hub/winvitals/releases/latest)**, run it, accept the prompt. There is nothing to install — one file, no .NET required.
 
 ---
 
