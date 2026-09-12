@@ -1,60 +1,95 @@
 <Window x:Class="WinVitals.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="WinVitals" Height="760" Width="920" MinHeight="560" MinWidth="720"
+        Title="WinVitals" Height="780" Width="1120" MinHeight="600" MinWidth="900"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource BgBrush}"
         UseLayoutRounding="True"
         TextOptions.TextFormattingMode="Ideal">
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="236" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-        <!-- Header -->
-        <Grid Grid.Row="0" Margin="28,22,28,14">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-
-            <StackPanel Grid.Column="0">
-                <TextBlock Text="WINVITALS" FontSize="11" FontWeight="Bold"
-                           Foreground="{DynamicResource MutedBrush}" />
-                <TextBlock x:Name="HeaderTitle" Style="{StaticResource H1}"
-                           Text="What can I help with?" Margin="0,4,0,0" />
-                <TextBlock x:Name="HeaderSubtitle" Style="{StaticResource Muted}"
-                           Text="Pick what is wrong and WinVitals will check it, explain what it finds, and offer to fix it."
-                           Margin="0,4,0,0" />
-            </StackPanel>
-
-            <Button x:Name="BackButton" Grid.Column="1" Style="{StaticResource Secondary}"
-                    Content="Start over" VerticalAlignment="Top" Visibility="Collapsed"
-                    Click="OnBack" />
-        </Grid>
-
-        <!-- Elevation banner -->
-        <Border x:Name="AdminBanner" Grid.Row="1" Margin="28,0,28,12"
-                Background="{DynamicResource WarningSoftBrush}"
-                BorderBrush="{DynamicResource WarningBrush}" BorderThickness="1"
-                CornerRadius="8" Padding="14,10" Visibility="Collapsed">
+        <!-- Navigation rail -->
+        <Border Grid.Column="0" Background="{DynamicResource CodeBgBrush}"
+                BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,1,0">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" VerticalAlignment="Center" TextWrapping="Wrap"
-                           Foreground="{DynamicResource WarningBrush}" FontSize="13"
-                           Text="Running without administrator rights. Some checks cannot run and no repairs can be applied." />
-                <Button Grid.Column="1" Style="{StaticResource Secondary}" Margin="12,0,0,0"
-                        Content="Restart as administrator" Click="OnElevate" />
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Brand -->
+                <StackPanel Grid.Row="0" Margin="20,22,16,18" Orientation="Horizontal">
+                    <Border Width="36" Height="36" CornerRadius="9" Background="{DynamicResource AccentBrush}"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="&#xE95E;" FontFamily="{DynamicResource IconFont}" FontSize="18"
+                                   Foreground="{DynamicResource AccentInkBrush}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="WinVitals" FontSize="17" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource InkBrush}" />
+                        <TextBlock Text="Diagnose · Clean up · Speed up" FontSize="11"
+                                   Foreground="{DynamicResource MutedBrush}" Margin="0,1,0,0" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Pages -->
+                <StackPanel Grid.Row="1" Margin="0,4,0,0">
+                    <RadioButton x:Name="NavHome" Style="{StaticResource NavItem}" GroupName="nav"
+                                 Tag="&#xE80F;" Content="Home" Checked="OnNav" />
+                    <RadioButton x:Name="NavDiagnose" Style="{StaticResource NavItem}" GroupName="nav"
+                                 Tag="&#xE9D9;" Content="Diagnose" Checked="OnNav" />
+                    <RadioButton x:Name="NavCleanup" Style="{StaticResource NavItem}" GroupName="nav"
+                                 Tag="&#xEA99;" Content="Clean up" Checked="OnNav" />
+                    <RadioButton x:Name="NavSpeedup" Style="{StaticResource NavItem}" GroupName="nav"
+                                 Tag="&#xEC4A;" Content="Speed up" Checked="OnNav" />
+                    <RadioButton x:Name="NavRepair" Style="{StaticResource NavItem}" GroupName="nav"
+                                 Tag="&#xE90F;" Content="Repair" Checked="OnNav" />
+
+                    <Rectangle Height="1" Fill="{DynamicResource LineBrush}" Margin="20,10" />
+
+                    <RadioButton x:Name="NavUndo" Style="{StaticResource NavItem}" GroupName="nav"
+                                 Tag="&#xE7A7;" Content="Undo changes" Checked="OnNav" />
+                </StackPanel>
+
+                <!-- Status -->
+                <StackPanel Grid.Row="2" Margin="20,12,16,18">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse x:Name="AdminDot" Width="8" Height="8" Fill="{DynamicResource OkBrush}"
+                                 VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBlock x:Name="AdminText" Text="Administrator" FontSize="12"
+                                   Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                        <TextBlock x:Name="VersionText" Text="v0.3.0" FontSize="12"
+                                   Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" />
+                        <Button Style="{StaticResource Ghost}" Content="Log folder" FontSize="12"
+                                Padding="8,2" Margin="6,0,0,0" Click="OnOpenLogs" />
+                    </StackPanel>
+                </StackPanel>
             </Grid>
         </Border>
 
-        <!-- Page host -->
-        <ContentControl x:Name="PageHost" Grid.Row="2" Margin="0,0,0,0" />
+        <!-- Content -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" Margin="32,26,32,14">
+                <TextBlock x:Name="HeaderTitle" Style="{StaticResource H1}" Text="Home" />
+                <TextBlock x:Name="HeaderSubtitle" Style="{StaticResource Muted}" Margin="0,4,0,0"
+                           Text="" />
+            </StackPanel>
+
+            <ContentControl x:Name="PageHost" Grid.Row="1" />
+        </Grid>
     </Grid>
 </Window>

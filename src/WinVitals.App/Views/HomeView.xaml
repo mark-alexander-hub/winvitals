@@ -1,0 +1,96 @@
+<UserControl x:Class="WinVitals.App.Views.HomeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer Padding="32,0,32,28">
+        <StackPanel>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="5*" />
+                    <ColumnDefinition Width="6*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Health -->
+                <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,12,0" Padding="22,20">
+                    <StackPanel>
+                        <TextBlock Text="HEALTH" Style="{StaticResource Label}" />
+                        <Grid Margin="0,14,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <ContentControl x:Name="RingHost" Grid.Column="0" Width="132" Height="132" />
+                            <StackPanel Grid.Column="1" Margin="20,0,0,0" VerticalAlignment="Center">
+                                <TextBlock x:Name="ScoreWord" Style="{StaticResource H2}" FontSize="20" Text="Not checked yet" />
+                                <TextBlock x:Name="ScoreDetail" Style="{StaticResource Muted}" Margin="0,4,0,0"
+                                           Text="Run a check-up to get a score for this PC." />
+                            </StackPanel>
+                        </Grid>
+                        <WrapPanel Margin="0,18,0,0">
+                            <Button Style="{StaticResource Primary}" Content="Run a full check-up" Margin="0,0,8,8"
+                                    Click="OnFullCheck" />
+                            <Button Style="{StaticResource Secondary}" Content="Pick a symptom" Margin="0,0,8,8"
+                                    Click="OnDiagnose" />
+                            <Button x:Name="ViewResultsButton" Style="{StaticResource Secondary}" Content="View last results"
+                                    Margin="0,0,8,8" Visibility="Collapsed" Click="OnViewResults" />
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Quick stats -->
+                <Border Grid.Column="1" Style="{StaticResource Card}" Margin="12,0,0,0" Padding="22,20">
+                    <StackPanel>
+                        <TextBlock Text="RIGHT NOW" Style="{StaticResource Label}" />
+                        <UniformGrid x:Name="Stats" Columns="2" Margin="0,10,0,0" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Three pillars -->
+            <UniformGrid Columns="3" Margin="0,16,0,0">
+                <Button Style="{StaticResource ChoiceCard}" Margin="0,0,8,0" Click="OnDiagnose">
+                    <StackPanel>
+                        <TextBlock Text="&#xE9D9;" FontFamily="{DynamicResource IconFont}" FontSize="22"
+                                   Foreground="{DynamicResource AccentBrush}" />
+                        <TextBlock Text="Diagnose" Style="{StaticResource H2}" Margin="0,10,0,0" />
+                        <TextBlock Text="Say what is wrong. Get an explanation and a fix." Style="{StaticResource Muted}" Margin="0,4,0,0" />
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource ChoiceCard}" Margin="4,0,4,0" Click="OnCleanup">
+                    <StackPanel>
+                        <TextBlock Text="&#xEA99;" FontFamily="{DynamicResource IconFont}" FontSize="22"
+                                   Foreground="{DynamicResource AccentBrush}" />
+                        <TextBlock Text="Clean up" Style="{StaticResource H2}" Margin="0,10,0,0" />
+                        <TextBlock Text="See what is eating the disk and reclaim it safely." Style="{StaticResource Muted}" Margin="0,4,0,0" />
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource ChoiceCard}" Margin="8,0,0,0" Click="OnSpeedup">
+                    <StackPanel>
+                        <TextBlock Text="&#xEC4A;" FontFamily="{DynamicResource IconFont}" FontSize="22"
+                                   Foreground="{DynamicResource AccentBrush}" />
+                        <TextBlock Text="Speed up" Style="{StaticResource H2}" Margin="0,10,0,0" />
+                        <TextBlock Text="Stop programs launching at sign-in that you do not need." Style="{StaticResource Muted}" Margin="0,4,0,0" />
+                    </StackPanel>
+                </Button>
+            </UniformGrid>
+
+            <!-- Recent changes -->
+            <Border x:Name="RecentCard" Style="{StaticResource Card}" Margin="0,16,0,0" Visibility="Collapsed">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="RECENT CHANGES" Style="{StaticResource Label}" />
+                        <TextBlock x:Name="RecentText" Style="{StaticResource Body}" Margin="0,6,12,0" />
+                    </StackPanel>
+                    <Button Grid.Column="1" Style="{StaticResource Secondary}" Content="Review or undo"
+                            VerticalAlignment="Center" Click="OnUndo" />
+                </Grid>
+            </Border>
+
+            <TextBlock Style="{StaticResource Muted}" Margin="2,18,0,0" TextWrapping="Wrap"
+                       Text="WinVitals only reads your system until you ask it to fix something. Before any repair it takes a system restore point and checks that the restore point really was created. Every change it makes can be undone." />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

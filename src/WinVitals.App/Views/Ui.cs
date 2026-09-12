@@ -107,6 +107,96 @@ internal static class Ui
     public static SolidColorBrush Brush(string key) =>
         (SolidColorBrush)Application.Current.FindResource(key + "Brush");
 
+    /// <summary>A dashboard number: big value, small label, one-line note.</summary>
+    public static Border Stat(string label, string value, string note)
+    {
+        var stack = new StackPanel();
+        stack.Children.Add(Text(label.ToUpperInvariant(), "Label"));
+        stack.Children.Add(new TextBlock
+        {
+            Text = value,
+            FontSize = 24,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = Brush("Ink"),
+            Margin = new Thickness(0, 4, 0, 0),
+        });
+        if (!string.IsNullOrWhiteSpace(note))
+            stack.Children.Add(Text(note, "Muted", new Thickness(0, 2, 0, 0)));
+
+        return new Border
+        {
+            Padding = new Thickness(0, 8, 12, 10),
+            Child = stack,
+        };
+    }
+
+    /// <summary>
+    /// A circular score gauge. Null score draws an empty track for "not checked yet".
+    /// Colour follows the score so the number and the ring agree at a glance.
+    /// </summary>
+    public static Grid Ring(int? score, double size, double thickness)
+    {
+        var grid = new Grid { Width = size, Height = size };
+
+        grid.Children.Add(new System.Windows.Shapes.Ellipse
+        {
+            Stroke = Brush("Line"),
+            StrokeThickness = thickness,
+            Margin = new Thickness(thickness / 2),
+        });
+
+        if (score.HasValue)
+        {
+            var key = score.Value >= 75 ? "Ok" : score.Value >= 50 ? "Warning" : "Critical";
+            var fraction = Math.Clamp(score.Value / 100.0, 0.0, 0.9999);
+            var radius = (size - thickness) / 2;
+            var centre = new Point(size / 2, size / 2);
+            var start = new Point(centre.X, centre.Y - radius);
+            var angle = fraction * 2 * Math.PI;
+            var end = new Point(centre.X + radius * Math.Sin(angle), centre.Y - radius * Math.Cos(angle));
+
+            var figure = new PathFigure { StartPoint = start, IsClosed = false };
+            figure.Segments.Add(new ArcSegment(end, new Size(radius, radius), 0,
+                fraction > 0.5, SweepDirection.Clockwise, true));
+            var geometry = new PathGeometry();
+            geometry.Figures.Add(figure);
+
+            grid.Children.Add(new System.Windows.Shapes.Path
+            {
+                Data = geometry,
+                Stroke = Brush(key),
+                StrokeThickness = thickness,
+                StrokeStartLineCap = PenLineCap.Round,
+                StrokeEndLineCap = PenLineCap.Round,
+            });
+
+            var number = new TextBlock
+            {
+                Text = score.Value.ToString(),
+                FontSize = size * 0.3,
+                FontWeight = FontWeights.Bold,
+                Foreground = Brush("Ink"),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            grid.Children.Add(number);
+        }
+        else
+        {
+            grid.Children.Add(new TextBlock
+            {
+                Text = "?",
+                FontSize = size * 0.3,
+                FontWeight = FontWeights.Bold,
+                Foreground = Brush("Muted"),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            });
+        }
+
+        return grid;
+    }
+
     /// <summary>One of the counters across the top of the results page.</summary>
     public static Border Tile(int count, string label, string brushKey)
     {

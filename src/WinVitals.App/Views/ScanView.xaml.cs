@@ -55,6 +55,7 @@ public partial class ScanView : UserControl
         Progress.Value = 100;
         StatusText.Text = "Finished";
 
+        Session.Remember(scan, _playbook);
         MainWindow.Instance?.Navigate(new ResultsView(scan, _playbook),
             "What I found", Summarise(scan));
     }

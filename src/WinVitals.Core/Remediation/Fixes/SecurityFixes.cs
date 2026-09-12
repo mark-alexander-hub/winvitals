@@ -124,7 +124,8 @@ public sealed class UpdateDefenderSignatures : IFix
     public FixRisk Risk => FixRisk.Safe;
     public bool NeedsElevation => true;
     public bool NeedsRestart => false;
-    public bool Reversible => true;
+    public bool Reversible => false;
+    public bool NothingToUndo => true;
 
     public string Explain =>
         "Downloads the latest Microsoft Defender definitions immediately rather than waiting for the next "

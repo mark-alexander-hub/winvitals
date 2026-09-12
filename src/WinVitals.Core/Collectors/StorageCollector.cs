@@ -60,10 +60,10 @@ public sealed class StorageCollector : ICollector
                         evidence: $"FriendlyName : {model}\nMediaType    : {media}\nHealthStatus : {health}\nSize         : {size}");
                 }
 
-                if (media == "HDD" && IsSystemDisk(d))
+                if (media == "HDD" && d.Str("DeviceId") == SystemDiskIndex())
                 {
                     m.Add(Severity.Advisory, "storage.hdd-system", "Windows is installed on a spinning hard disk",
-                        what: $"The system drive is a mechanical HDD ({model}).",
+                        what: $"The system drive is on a mechanical HDD ({model}, disk {d.Str("DeviceId")}).",
                         why: "On a modern Windows build this is the single largest cause of a slow machine. "
                              + "No amount of software tuning closes the gap: a mechanical disk serves roughly "
                              + "one hundredth of the random reads an SSD does, and Windows does a great many "
@@ -81,11 +81,27 @@ public sealed class StorageCollector : ICollector
         }
     }
 
-    private static bool IsSystemDisk(System.Management.ManagementBaseObject disk)
+    /// <summary>
+    /// The physical disk number that holds the Windows volume, or null when it cannot
+    /// be determined.
+    ///
+    /// Walked through the logical-disk-to-partition association rather than assumed
+    /// to be disk 0. On a laptop with a factory HDD and an added SSD the HDD is very
+    /// often disk 0 while Windows lives on the SSD, and "assume 0" then tells the
+    /// owner their machine runs from a spinning disk when it does not. When the answer
+    /// is unknown, no HDD advice is given: a missing hint beats a wrong one.
+    /// </summary>
+    private static string? SystemDiskIndex()
     {
-        // DeviceId 0 is not a guarantee, but on a single-disk laptop it is right, and
-        // this only decides whether to show advice, never a destructive action.
-        return disk.Str("DeviceId") == "0";
+        var root = Path.GetPathRoot(Environment.SystemDirectory)?.TrimEnd('\\');
+        if (string.IsNullOrEmpty(root)) return null;
+
+        var partition = Wmi.First(
+            $"ASSOCIATORS OF {{Win32_LogicalDisk.DeviceID='{root}'}} WHERE AssocClass=Win32_LogicalDiskToPartition");
+        if (partition is null) return null;
+
+        // MSFT_PhysicalDisk.DeviceId is the same disk number as Win32_DiskPartition.DiskIndex.
+        return partition.Num("DiskIndex").ToString();
     }
 
     private static void Volumes(ModuleResult m)

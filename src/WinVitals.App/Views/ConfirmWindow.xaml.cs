@@ -12,6 +12,7 @@ public partial class ConfirmWindow : Window
 {
     public ConfirmWindow(List<(IFix Fix, Finding Finding)> work)
     {
+        Log.Info($"ConfirmWindow: constructing for {work.Count} fix(es)");
         InitializeComponent();
 
         Headline.Text = work.Count == 1
@@ -22,6 +23,17 @@ public partial class ConfirmWindow : Window
 
         foreach (var (fix, finding) in work)
             Host.Children.Add(BuildEntry(fix, finding, work.Count > 1));
+
+        Loaded += (_, _) => Log.Info("ConfirmWindow: loaded");
+        Closing += (_, _) =>
+        {
+            // A dialog that closes without the user pressing Apply is the case worth
+            // understanding, so record who asked for it.
+            if (DialogResult != true)
+                Log.Warn($"ConfirmWindow: closing with DialogResult={DialogResult?.ToString() ?? "null"}\n{Environment.StackTrace}");
+        };
+        Closed += (_, _) => Log.Info($"ConfirmWindow: closed, DialogResult={DialogResult?.ToString() ?? "null"}");
+        Log.Info("ConfirmWindow: constructed");
     }
 
     private static UIElement BuildEntry(IFix fix, Finding finding, bool numbered)
@@ -39,11 +51,13 @@ public partial class ConfirmWindow : Window
         panel.Children.Add(Ui.CodeBox(preview));
 
         var reversal = fix.Reversible
-            ? "This can be undone from the \"Undo previous changes\" screen at any time."
-            : "This CANNOT be undone. Make sure you are happy before continuing.";
+            ? "This can be undone from the \"Undo changes\" screen at any time."
+            : fix.NothingToUndo
+                ? "This changes nothing you could want back, so there is nothing to undo."
+                : "This CANNOT be undone. Make sure you are happy before continuing.";
 
         var note = Ui.Text(reversal, "Body", new Thickness(0, 10, 0, 0));
-        note.Foreground = Ui.Brush(fix.Reversible ? "Muted" : "Warning");
+        note.Foreground = Ui.Brush(fix.Reversible || fix.NothingToUndo ? "Muted" : "Warning");
         panel.Children.Add(note);
 
         if (fix.NeedsRestart)

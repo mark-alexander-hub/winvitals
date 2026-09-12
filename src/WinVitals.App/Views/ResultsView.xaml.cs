@@ -176,12 +176,17 @@ public partial class ResultsView : UserControl
         catch (Exception ex) { return $"(could not build a preview: {ex.Message})"; }
     }
 
-    private static string RiskLabel(IFix fix) => fix.Risk switch
+    private static string RiskLabel(IFix fix)
     {
-        FixRisk.Safe => fix.Reversible ? "safe · undoable" : "safe · permanent",
-        FixRisk.Moderate => fix.Reversible ? "needs care · undoable" : "needs care",
-        _ => fix.Reversible ? "your call · undoable" : "your call · permanent",
-    };
+        var risk = fix.Risk switch
+        {
+            FixRisk.Safe => "safe",
+            FixRisk.Moderate => "needs care",
+            _ => "your call",
+        };
+        var undo = fix.Reversible ? "undoable" : fix.NothingToUndo ? "nothing to undo" : "permanent";
+        return $"{risk} · {undo}";
+    }
 
     private void BuildActionBar()
     {
@@ -201,7 +206,7 @@ public partial class ResultsView : UserControl
         if (!App.Elevated)
         {
             ActionHeadline.Text = "Repairs need administrator rights";
-            ActionDetail.Text = "Restart WinVitals as administrator using the button above to enable repairs.";
+            ActionDetail.Text = "Close WinVitals and run it as administrator to enable repairs.";
             return;
         }
 
@@ -240,11 +245,12 @@ public partial class ResultsView : UserControl
 
     private void ApplyOne(Finding finding, IFix fix)
     {
+        Log.Info($"ApplyOne: {fix.Title} for {finding.Id} (needsElevation={fix.NeedsElevation}, elevated={App.Elevated})");
+
         if (fix.NeedsElevation && !App.Elevated)
         {
             MessageBox.Show(Window.GetWindow(this),
-                "This repair needs administrator rights. Use \"Restart as administrator\" at the top of the "
-                + "window, then try again.",
+                "This repair needs administrator rights. Close WinVitals and run it as administrator.",
                 "WinVitals", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
@@ -254,7 +260,11 @@ public partial class ResultsView : UserControl
             Owner = Window.GetWindow(this),
         };
 
-        if (confirm.ShowDialog() != true) return;
+        Log.Info("ApplyOne: showing confirm dialog");
+        var result = confirm.ShowDialog();
+        Log.Info($"ApplyOne: dialog returned {result?.ToString() ?? "null"}");
+
+        if (result != true) return;
         RunRepairs(new List<(Finding, IFix)> { (finding, fix) });
     }
 

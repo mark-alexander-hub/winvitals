@@ -26,11 +26,12 @@ public static class Cli
 
         Banner();
 
+        // The release manifest requires administrator, so this is only ever false for
+        // a debug build launched from an unelevated shell. Say so rather than hide it.
         var elevated = ScanContext.IsElevated();
-        if (!elevated && !args.NoElevate)
+        if (!elevated)
         {
-            if (TryRelaunchElevated(rawArgs, out var childExit)) return childExit;
-            Console.WriteLine("  Continuing without administrator rights — some checks will be skipped.");
+            Console.WriteLine("  Not running as administrator — some checks will be skipped and marked as such.");
             Console.WriteLine();
         }
 
@@ -151,37 +152,6 @@ public static class Cli
         var name = $"WinVitals-report-{DateTime.Now:yyyyMMdd-HHmm}.{extension}";
         var desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
         return Path.Combine(Directory.Exists(desktop) ? desktop : Directory.GetCurrentDirectory(), name);
-    }
-
-    private static bool TryRelaunchElevated(string[] rawArgs, out int exitCode)
-    {
-        exitCode = 0;
-        var exe = Environment.ProcessPath;
-        if (exe is null) return false;
-
-        Console.WriteLine("  Some checks need administrator rights. Asking for elevation...");
-
-        var psi = new ProcessStartInfo
-        {
-            FileName = exe,
-            UseShellExecute = true,
-            Verb = "runas",
-            Arguments = string.Join(" ", rawArgs.Select(a => a.Contains(' ') ? $"\"{a}\"" : a).Append("--no-elevate")),
-        };
-
-        try
-        {
-            using var p = Process.Start(psi);
-            if (p is null) return false;
-            p.WaitForExit();
-            exitCode = p.ExitCode;
-            return true;
-        }
-        catch
-        {
-            Console.WriteLine("  Elevation declined.");
-            return false;
-        }
     }
 
     private static void OpenInBrowser(string path)

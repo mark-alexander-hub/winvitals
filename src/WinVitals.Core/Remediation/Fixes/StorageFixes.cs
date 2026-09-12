@@ -170,6 +170,7 @@ public sealed class EmptyRecycleBin : IFix
 public sealed class DisableHibernateForSpace : IFix
 {
     public string FindingId => "storage.hiberfil";
+    public bool Standalone => true;
     public string Title => "Turn off hibernate and reclaim the space";
     public FixRisk Risk => FixRisk.Moderate;
     public bool NeedsElevation => true;

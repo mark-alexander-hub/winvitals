@@ -5,7 +5,7 @@ namespace WinVitals.App;
 
 public static class AppInfo
 {
-    public const string Version = "0.2.0";
+    public const string Version = "0.3.0";
 
     /// <summary>Order here is the order of sections in the report and the scan.</summary>
     public static readonly ICollector[] AllCollectors =

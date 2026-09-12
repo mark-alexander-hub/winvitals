@@ -47,19 +47,72 @@ public static class Theme
         IsDark = SystemPrefersDark();
 
         foreach (var (name, colours) in Palette)
-        {
-            var colour = (Color)ColorConverter.ConvertFromString(IsDark ? colours.Dark : colours.Light)!;
-            var brush = new SolidColorBrush(colour);
-            brush.Freeze();
+            Install(app, name, (Color)ColorConverter.ConvertFromString(IsDark ? colours.Dark : colours.Light)!);
 
-            // The "Brush" suffix keeps the palette out of the same namespace as the
-            // control styles. Without it a palette entry called Muted or Card silently
-            // shadows the TextBlock or Border style of the same name, and WPF then
-            // throws when it is handed a brush where a Style was expected.
-            app.Resources[name + "Brush"] = brush;
-            app.Resources[name + "Color"] = colour;
+        // The accent follows the user's own Windows accent colour, so the app looks
+        // like it belongs on their machine rather than on the developer's.
+        var accent = WindowsAccent();
+        if (accent.HasValue)
+        {
+            var a = accent.Value;
+            Install(app, "Accent", a);
+            Install(app, "AccentInk", Luminance(a) > 0.55 ? Color.FromRgb(0x0E, 0x12, 0x16) : Colors.White);
+            Install(app, "AccentSoft", Blend(a, (Color)app.Resources["CardColor"], IsDark ? 0.22 : 0.14));
+            Install(app, "Advisory", a);
+            Install(app, "AdvisorySoft", (Color)app.Resources["AccentSoftColor"]);
+        }
+
+        // Segoe Fluent Icons ships with Windows 11; MDL2 Assets is the Windows 10
+        // fallback and shares the glyph codepoints used here.
+        app.Resources["IconFont"] = new FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets");
+    }
+
+    private static void Install(Application app, string name, Color colour)
+    {
+        var brush = new SolidColorBrush(colour);
+        brush.Freeze();
+
+        // The "Brush" suffix keeps the palette out of the same namespace as the
+        // control styles. Without it a palette entry called Muted or Card silently
+        // shadows the TextBlock or Border style of the same name, and WPF then
+        // throws when it is handed a brush where a Style was expected.
+        app.Resources[name + "Brush"] = brush;
+        app.Resources[name + "Color"] = colour;
+    }
+
+    /// <summary>The Windows accent colour, or null when it cannot be read.</summary>
+    private static Color? WindowsAccent()
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\DWM");
+            var value = key?.GetValue("AccentColor");
+            if (value is null) return null;
+
+            // Stored as ABGR, not ARGB.
+            var abgr = unchecked((uint)Convert.ToInt32(value));
+            var r = (byte)(abgr & 0xFF);
+            var g = (byte)((abgr >> 8) & 0xFF);
+            var b = (byte)((abgr >> 16) & 0xFF);
+            var colour = Color.FromRgb(r, g, b);
+
+            // A near-black or near-white accent gives unreadable buttons; keep the default then.
+            var lum = Luminance(colour);
+            return lum is > 0.08 and < 0.92 ? colour : null;
+        }
+        catch
+        {
+            return null;
         }
     }
+
+    private static double Luminance(Color c) =>
+        (0.2126 * c.R + 0.7152 * c.G + 0.0722 * c.B) / 255.0;
+
+    private static Color Blend(Color top, Color bottom, double amount) => Color.FromRgb(
+        (byte)(bottom.R + (top.R - bottom.R) * amount),
+        (byte)(bottom.G + (top.G - bottom.G) * amount),
+        (byte)(bottom.B + (top.B - bottom.B) * amount));
 
     private static bool SystemPrefersDark()
     {

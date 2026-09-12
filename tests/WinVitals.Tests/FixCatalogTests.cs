@@ -53,6 +53,17 @@ public class FixCatalogTests
     }
 
     [Fact]
+    public void NothingToUndoAndReversibleAreMutuallyExclusive()
+    {
+        // "Nothing to undo" exists so a harmless action is not labelled "cannot be
+        // undone". It must never be combined with Reversible, or the interface would
+        // tell the user both that there is an undo and that there is nothing to undo.
+        Assert.All(FixCatalog.All, fix =>
+            Assert.False(fix.NothingToUndo && fix.Reversible,
+                $"{fix.GetType().Name} claims both NothingToUndo and Reversible"));
+    }
+
+    [Fact]
     public void EveryFixExplainsItselfAndHasATitle()
     {
         Assert.All(FixCatalog.All, fix =>

@@ -143,6 +143,47 @@
         </Setter>
     </Style>
 
+    <!-- Navigation rail entries. A RadioButton so exactly one is selected and the
+         selection state comes for free. -->
+    <Style TargetType="RadioButton" x:Key="NavItem">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Margin" Value="8,2" />
+        <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Border x:Name="Chrome" CornerRadius="7" Padding="12,9" Background="Transparent">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Rectangle x:Name="Marker" Width="3" Height="16" RadiusX="1.5" RadiusY="1.5"
+                                       Fill="{DynamicResource AccentBrush}" Margin="-8,0,0,0"
+                                       HorizontalAlignment="Left" Visibility="Collapsed" />
+                            <TextBlock x:Name="Icon" Grid.Column="0" Text="{TemplateBinding Tag}"
+                                       FontFamily="{DynamicResource IconFont}" FontSize="16"
+                                       VerticalAlignment="Center" Margin="4,0,12,0"
+                                       Foreground="{DynamicResource MutedBrush}" />
+                            <ContentPresenter Grid.Column="1" VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource CardHoverBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource CardBrush}" />
+                            <Setter TargetName="Marker" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="Icon" Property="Foreground" Value="{DynamicResource AccentBrush}" />
+                            <Setter Property="FontWeight" Value="SemiBold" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style TargetType="CheckBox" x:Key="Check">
         <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
         <Setter Property="FontSize" Value="14" />

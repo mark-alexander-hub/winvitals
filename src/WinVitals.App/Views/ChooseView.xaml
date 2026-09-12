@@ -2,9 +2,8 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <ScrollViewer Padding="28,0,28,28">
+    <ScrollViewer Padding="32,0,32,28">
         <StackPanel>
-
             <ItemsControl x:Name="PlaybookList">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
@@ -12,41 +11,32 @@
                                 Tag="{Binding Id}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
 
-                                <StackPanel Grid.Column="0">
-                                    <TextBlock Text="{Binding Title}" Style="{StaticResource H2}" />
+                                <Border Grid.Column="0" Width="40" Height="40" CornerRadius="10"
+                                        Background="{DynamicResource AccentSoftBrush}" Margin="0,0,16,0"
+                                        VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Glyph}" FontFamily="{DynamicResource IconFont}"
+                                               FontSize="18" Foreground="{DynamicResource AccentBrush}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Title}" Style="{StaticResource H2}" FontSize="16" />
                                     <TextBlock Text="{Binding Subtitle}" Style="{StaticResource Muted}"
                                                Margin="0,3,12,0" />
                                 </StackPanel>
 
-                                <TextBlock Grid.Column="1" Text="{Binding Duration}"
+                                <TextBlock Grid.Column="2" Text="{Binding Duration}"
                                            Style="{StaticResource Muted}" VerticalAlignment="Center" />
                             </Grid>
                         </Button>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
-
-            <Border Style="{StaticResource Card}" Margin="0,14,0,0">
-                <StackPanel>
-                    <TextBlock Text="Other things you can do" Style="{StaticResource Label}" />
-                    <WrapPanel Margin="0,8,0,0">
-                        <Button Style="{StaticResource Secondary}" Content="Repair tools"
-                                Margin="0,0,8,8" Click="OnTools" />
-                        <Button Style="{StaticResource Secondary}" Content="Manage startup programs"
-                                Margin="0,0,8,8" Click="OnStartup" />
-                        <Button Style="{StaticResource Secondary}" Content="Undo previous changes"
-                                Margin="0,0,8,8" Click="OnUndo" />
-                    </WrapPanel>
-                </StackPanel>
-            </Border>
-
-            <TextBlock Style="{StaticResource Muted}" Margin="2,16,0,0" TextWrapping="Wrap"
-                       Text="WinVitals only reads your system until you ask it to fix something. Before any repair it takes a system restore point and checks that the restore point really was created. Every change it makes can be undone." />
-
         </StackPanel>
     </ScrollViewer>
 </UserControl>

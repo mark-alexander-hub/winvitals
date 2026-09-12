@@ -94,6 +94,14 @@ public interface IFix
     /// <summary>False when the change cannot be put back, such as deleting files.</summary>
     bool Reversible { get; }
 
+    /// <summary>
+    /// True when the action leaves nothing behind to reverse — repairing system files,
+    /// flushing a cache, updating definitions. Distinct from an irreversible change:
+    /// nothing was altered that you could want back, so "cannot be undone" would be
+    /// both true and alarming.
+    /// </summary>
+    bool NothingToUndo => false;
+
     /// <summary>Exact commands or changes, shown before anything runs.</summary>
     string Preview(Finding finding);
 

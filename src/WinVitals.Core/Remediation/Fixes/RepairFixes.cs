@@ -19,7 +19,8 @@ public sealed class RepairSystemFiles : IFix
     public FixRisk Risk => FixRisk.Moderate;
     public bool NeedsElevation => true;
     public bool NeedsRestart => false;
-    public bool Reversible => true;
+    public bool Reversible => false;
+    public bool NothingToUndo => true;
 
     public string Explain =>
         "Checks Windows' own files for damage and repairs anything broken from Microsoft's copies. This is the "
@@ -121,7 +122,8 @@ public sealed class FlushDnsCache : IFix
     public FixRisk Risk => FixRisk.Safe;
     public bool NeedsElevation => false;
     public bool NeedsRestart => false;
-    public bool Reversible => true;
+    public bool Reversible => false;
+    public bool NothingToUndo => true;
 
     public string Explain =>
         "Forgets remembered website addresses so Windows looks them up fresh. Fixes the case where one site "

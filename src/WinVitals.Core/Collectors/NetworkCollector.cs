@@ -1,3 +1,4 @@
+using System.Management;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
@@ -43,8 +44,17 @@ public sealed class NetworkCollector : ICollector
 
     private static void Adapters(ScanContext ctx, ModuleResult m)
     {
-        var drivers = Wmi.Query("SELECT DeviceName, DriverVersion, DriverDate, DriverProviderName FROM Win32_PnPSignedDriver WHERE DeviceClass = 'NET'")
-            .ToDictionary(d => d.Str("DeviceName"), d => d, StringComparer.OrdinalIgnoreCase);
+        // Not ToDictionary: device names are not unique. Windows creates several
+        // adapters called "Microsoft Wi-Fi Direct Virtual Adapter", and a duplicate key
+        // would throw and take the whole network module down with it.
+        var drivers = new Dictionary<string, ManagementBaseObject>(StringComparer.OrdinalIgnoreCase);
+        foreach (var driver in Wmi.Query(
+                     "SELECT DeviceName, DriverVersion, DriverDate, DriverProviderName "
+                     + "FROM Win32_PnPSignedDriver WHERE DeviceClass = 'NET'"))
+        {
+            var name = driver.Str("DeviceName");
+            if (name.Length > 0) drivers.TryAdd(name, driver);
+        }
 
         var up = 0;
         foreach (var nic in NetworkInterface.GetAllNetworkInterfaces())

@@ -3,9 +3,45 @@ using WinVitals.Remediation.Fixes;
 
 namespace WinVitals.Remediation;
 
+/// <summary>Where a repair belongs in the interface.</summary>
+public enum FixCategory
+{
+    /// <summary>Sleep, wake, hibernate.</summary>
+    Power,
+
+    /// <summary>Reclaiming disk space.</summary>
+    Storage,
+
+    /// <summary>Firewall, remote access, antivirus, shares.</summary>
+    Security,
+
+    /// <summary>Network stack, DNS.</summary>
+    Network,
+
+    /// <summary>Windows itself: system files, updates.</summary>
+    Repair,
+}
+
 /// <summary>Every repair WinVitals knows how to perform.</summary>
 public static class FixCatalog
 {
+    /// <summary>
+    /// Derived from the finding id the fix answers, so adding a fix never requires
+    /// remembering to also file it under a category.
+    /// </summary>
+    public static FixCategory CategoryOf(IFix fix)
+    {
+        var id = fix.FindingId;
+        if (id.StartsWith("power.", StringComparison.OrdinalIgnoreCase)) return FixCategory.Power;
+        if (id.StartsWith("storage.", StringComparison.OrdinalIgnoreCase)) return FixCategory.Storage;
+        if (id.StartsWith("security.", StringComparison.OrdinalIgnoreCase)) return FixCategory.Security;
+        if (id.StartsWith("network.", StringComparison.OrdinalIgnoreCase)) return FixCategory.Network;
+        return FixCategory.Repair;
+    }
+
+    public static IEnumerable<IFix> ToolsIn(params FixCategory[] categories) =>
+        Tools.Where(f => categories.Contains(CategoryOf(f)));
+
     public static readonly IReadOnlyList<IFix> All = new IFix[]
     {
         // Power and sleep

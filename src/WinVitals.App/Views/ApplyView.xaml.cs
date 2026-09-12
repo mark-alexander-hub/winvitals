@@ -155,10 +155,7 @@ public partial class ApplyView : UserControl
         return card;
     }
 
-    private void OnUndo(object sender, RoutedEventArgs e) =>
-        MainWindow.Instance?.Navigate(new UndoView(),
-            "Undo previous changes",
-            "Everything WinVitals has changed on this PC, and how to put it back.");
+    private void OnUndo(object sender, RoutedEventArgs e) => MainWindow.Instance?.ShowPage("undo");
 
     private void OnRestart(object sender, RoutedEventArgs e)
     {

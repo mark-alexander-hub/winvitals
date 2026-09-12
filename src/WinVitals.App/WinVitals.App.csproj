@@ -17,11 +17,19 @@
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <!-- System.Management is reflection-heavy over WMI; trimming breaks it. -->
     <PublishTrimmed>false</PublishTrimmed>
-    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- InvariantGlobalization must stay off. WPF is not supported under it: font
+         fallback initialises MS.Internal.FontCache.MajorLanguages, which needs real
+         culture data, and any specific-culture lookup fails with "Cannot find
+         non-neutral culture related to 'en-us'". It saves binary size and breaks the
+         first dialog that renders a multi-family font. -->
+    <InvariantGlobalization>false</InvariantGlobalization>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
 
-    <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.2.0</Version>
+    <!-- Release requires administrator (app.manifest). Debug is asInvoker so the
+         interface can be driven by automated tests without a UAC prompt per run. -->
+    <ApplicationManifest Condition="'$(Configuration)' == 'Debug'">app.debug.manifest</ApplicationManifest>
+    <ApplicationManifest Condition="'$(Configuration)' != 'Debug'">app.manifest</ApplicationManifest>
+    <Version>0.3.0</Version>
     <Product>WinVitals</Product>
     <Description>Diagnose and repair a Windows PC, in plain English.</Description>
     <Company>WinVitals contributors</Company>

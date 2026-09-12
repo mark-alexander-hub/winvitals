@@ -2,22 +2,21 @@
 <assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
   <assemblyIdentity version="1.0.0.0" name="WinVitals.app" />
 
+  <!-- DEBUG BUILDS ONLY. Release uses app.manifest, which requires administrator.
+
+       Debug stays asInvoker so the UI can be driven by automated tests from an
+       unelevated shell without a UAC prompt on every launch. The app still reports
+       missing elevation honestly; it just does not refuse to start. -->
   <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
     <security>
       <requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v3">
-        <!-- requireAdministrator: this is a repair tool. Half of its checks return
-             nothing to a standard user, and no repair can be applied without
-             elevation, so an unelevated run would be a worse product with a banner
-             apologising for itself. Windows prompts once at launch; declining simply
-             does not start it. -->
-        <requestedExecutionLevel level="requireAdministrator" uiAccess="false" />
+        <requestedExecutionLevel level="asInvoker" uiAccess="false" />
       </requestedPrivileges>
     </security>
   </trustInfo>
 
   <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
     <application>
-      <!-- Windows 10 / 11 -->
       <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}" />
     </application>
   </compatibility>
@@ -28,5 +27,4 @@
       <activeCodePage xmlns="http://schemas.microsoft.com/SMI/2019/WindowsSettings">UTF-8</activeCodePage>
     </windowsSettings>
   </application>
-
 </assembly>

@@ -132,15 +132,17 @@ Exit codes: `0` nothing critical, `1` at least one critical finding, `2` bad arg
 
 ## Administrator rights
 
-WinVitals asks for elevation on startup and runs without it if you say no.
+WinVitals always runs as administrator. Windows asks once when it starts; declining
+simply does not start it.
 
-It asks because these return nothing at all to a standard user: what is holding the
-machine awake, what is scheduled to wake it, the drive's own failure prediction,
-BitLocker status, and whether any restore point exists. No repair can be applied
-without it either.
+It requires elevation because half of what it does is impossible without it: what is
+holding the machine awake, what is scheduled to wake it, the drive's own failure
+prediction, BitLocker status, whether any restore point exists — and every repair. A
+version that ran unelevated would be a worse tool with a banner apologising for itself.
 
-Decline and you still get a useful scan, with a banner saying what is unavailable and
-the skipped checks counted under "not checked".
+Debug builds are the one exception: they run as whoever launched them, so the interface
+can be driven by automated tests without a UAC prompt per run. They say so in the
+corner of the window.
 
 ## Building it yourself
 
