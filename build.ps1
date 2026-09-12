@@ -46,6 +46,14 @@ if (-not (Get-Command $dotnet -ErrorAction SilentlyContinue)) {
 
 Write-Host "Building WinVitals ($Configuration, $Runtime)..." -ForegroundColor Cyan
 
+# A running copy of the previous build holds its files open, and the failure that
+# produces is an unhelpful "access denied" on a DLL. Say what is actually wrong.
+$running = Get-Process -Name WinVitals -ErrorAction SilentlyContinue |
+    Where-Object { try { $_.Path -and $_.Path.StartsWith($dist, [StringComparison]::OrdinalIgnoreCase) } catch { $true } }
+if ($running) {
+    throw "WinVitals is running from $dist (pid $($running.Id -join ', ')). Close it, then build again."
+}
+
 if (Test-Path $dist) { Remove-Item $dist -Recurse -Force }
 New-Item -ItemType Directory -Path $dist | Out-Null
 

@@ -15,6 +15,11 @@
     <SelfContained>true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <!-- WPF's native helpers (wpfgfx, D3DCompiler, PenImc, vcruntime) are left
+         beside the exe by default, which makes "one file" a lie: copy the exe
+         alone and it will not start. This bundles them and extracts to %TEMP%
+         on first run. -->
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <!-- System.Management is reflection-heavy over WMI; trimming breaks it. -->
     <PublishTrimmed>false</PublishTrimmed>
     <!-- InvariantGlobalization must stay off. WPF is not supported under it: font
