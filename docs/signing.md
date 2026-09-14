@@ -34,7 +34,22 @@ workflow if they differ.
 
 ## Application
 
-Submitted at https://signpath.org/apply. Text used:
+**Creating a SignPath.io account is not the application.** They are two separate
+things, and doing only the first leaves you stuck: signing up gives you an empty
+workspace whose certificate options are a self-signed certificate, a CSR for buying a
+commercial one, or importing a PFX you already own.
+
+None of those removes *Unknown publisher*. A self-signed certificate is not verified by
+a certificate authority and has to be installed by hand on every machine that is meant
+to trust it, so on a stranger's PC the warning is identical to having no certificate at
+all. SignPath's own wording says to consider it "only for test-signing".
+
+The certificate this project uses is **granted** by SignPath Foundation after they
+review the application below, and appears under **Certificates** in the workspace on
+its own. If you already have a SignPath.io organization, name it in the application so
+they attach the certificate to it.
+
+Apply at https://signpath.org/apply with:
 
 > **Project name:** WinVitals
 >
