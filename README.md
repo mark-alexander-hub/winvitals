@@ -161,22 +161,19 @@ corner of the window.
 ## Signing
 
 An unsigned build shows **"Unknown publisher"** on the UAC prompt and a SmartScreen
-warning on first run. That is Windows doing its job: nothing vouches for the file. Only
-an Authenticode signature from a certificate authority changes it — setting the
-company name in the file's properties does not.
+*"Windows protected your PC"* warning on first run. That is Windows doing its job:
+nothing vouches for the file. Until releases are signed, click **More info → Run
+anyway**, or install through winget, which does not trigger the warning.
 
-Options, cheapest workable first:
-
-- **SignPath Foundation** — free code-signing for open-source projects that build in
-  public CI. The right fit once this repository is public.
-- **Azure Trusted Signing** — Microsoft's service, about US$10 a month, open to
-  individual developers after identity verification. The workflow already contains a
-  signing step that activates when the `AZURE_*` secrets are set.
-- **A conventional OV/EV certificate** — US$100–400 a year. `./build.ps1 -Sign` signs
-  with a `.pfx` given by `WINVITALS_PFX` / `WINVITALS_PFX_PASSWORD`.
+Releases are being set up to be signed through **SignPath Foundation**, which
+provides free code-signing certificates to open-source projects. The workflow step is
+in place and activates once the project is approved; see [docs/signing.md](docs/signing.md)
+for how it works and what was submitted. `./build.ps1 -Sign` remains available for
+signing with a conventional `.pfx`, and the workflow also carries a dormant Azure
+Trusted Signing step.
 
 SmartScreen reputation is separate from the signature and is earned by downloads over
-time; an EV certificate skips that wait, the others do not.
+time.
 
 ## Building it yourself
 
