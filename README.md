@@ -6,6 +6,8 @@ Diagnose, clean up and speed up a Windows PC — written for people who are not 
 
 <br clear="left" />
 
+[![build](https://github.com/mark-alexander-hub/winvitals/actions/workflows/build.yml/badge.svg)](https://github.com/mark-alexander-hub/winvitals/actions/workflows/build.yml)
+
 A check-up and repair tool for a Windows PC.
 
 You tell it what is wrong in plain words — *"it won't sleep"*, *"my PC is slow"*, *"the
