@@ -39,14 +39,27 @@ jobs:
         run: dotnet test tests/WinVitals.Tests/WinVitals.Tests.csproj --configuration Release
 
       - name: Smoke test
-        # The scan must complete on a clean runner without elevation and without
-        # crashing any collector. --no-elevate keeps it non-interactive.
+        # The scan must complete on unfamiliar hardware without crashing a collector.
+        #
+        # Runs the managed dll through the dotnet host rather than the built
+        # WinVitals.exe. The Release apphost carries a requireAdministrator manifest,
+        # so launching it on an unelevated runner fails with Win32 error 740 before a
+        # single line of the app runs — and fails silently, because the process never
+        # starts. dotnet exec runs the same Release code as the invoking user.
         run: |
-          dotnet run --project src/WinVitals.App --configuration Release --no-build -- `
-            --no-elevate --no-open --redact --out report.html --json report.json
-          if (-not (Test-Path report.html)) { throw "no HTML report produced" }
-          if (-not (Test-Path report.json)) { throw "no JSON report produced" }
-          $findings = (Get-Content report.json -Raw | ConvertFrom-Json).Modules.Findings
+          $dll  = "src/WinVitals.App/bin/Release/net8.0-windows/win-x64/WinVitals.dll"
+          $html = Join-Path $env:GITHUB_WORKSPACE 'report.html'
+          $json = Join-Path $env:GITHUB_WORKSPACE 'report.json'
+          dotnet exec $dll --no-open --redact --out $html --json $json
+
+          # 0 means nothing critical, 1 means the runner itself has a critical finding.
+          # Both mean the scan ran, which is what this step tests. Anything higher is a
+          # real failure: 2 bad arguments, 3 could not write, 4 unhandled exception.
+          if ($LASTEXITCODE -gt 1) { throw "scan exited with $LASTEXITCODE" }
+
+          if (-not (Test-Path $html)) { throw "no HTML report produced" }
+          if (-not (Test-Path $json)) { throw "no JSON report produced" }
+          $findings = (Get-Content $json -Raw | ConvertFrom-Json).Modules.Findings
           Write-Host "produced $($findings.Count) findings across all modules"
           if ($findings.Count -lt 1) { throw "scan produced no findings at all" }
 
