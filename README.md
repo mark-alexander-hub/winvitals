@@ -19,6 +19,12 @@ every repair can be undone.
 
 **[Download `WinVitals.exe`](https://github.com/mark-alexander-hub/winvitals/releases/latest)**, run it, accept the prompt. There is nothing to install — one file, no .NET required.
 
+Or install it with [winget](https://learn.microsoft.com/windows/package-manager/winget/), which skips the SmartScreen warning:
+
+```
+winget install winvitals
+```
+
 ---
 
 ## Why this exists
