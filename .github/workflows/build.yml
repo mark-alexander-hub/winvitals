@@ -73,6 +73,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: WinVitals-unsigned
+          retention-days: 3
           path: dist/WinVitals.exe
 
       # SignPath Foundation: release tags only. Each request waits for the
@@ -120,6 +121,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: WinVitals
+          retention-days: 3
           path: dist/WinVitals.exe
 
       - name: Attach to release
