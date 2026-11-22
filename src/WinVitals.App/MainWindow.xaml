@@ -64,7 +64,7 @@
                                    Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                        <TextBlock x:Name="VersionText" Text="v0.3.0" FontSize="12"
+                        <TextBlock x:Name="VersionText" Text="" FontSize="12"
                                    Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" />
                         <Button Style="{StaticResource Ghost}" Content="Log folder" FontSize="12"
                                 Padding="8,2" Margin="6,0,0,0" Click="OnOpenLogs" />

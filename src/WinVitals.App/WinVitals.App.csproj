@@ -36,7 +36,7 @@
     <ApplicationManifest Condition="'$(Configuration)' != 'Debug'">app.manifest</ApplicationManifest>
     <!-- Keep in step with AppInfo.Version: this one goes into the file's properties
          and the update check compares the other against GitHub. -->
-    <Version>0.4.0</Version>
+    <Version>0.4.1</Version>
     <Product>WinVitals</Product>
     <Description>Diagnose, clean up and speed up a Windows PC, in plain English.</Description>
     <Company>Mark Isidore Nicholas Alexander</Company>

@@ -5,7 +5,7 @@ namespace WinVitals.App;
 
 public static class AppInfo
 {
-    public const string Version = "0.4.0";
+    public const string Version = "0.4.1";
 
     /// <summary>Where releases live; used by the update check and the README.</summary>
     public const string Repository = "mark-alexander-hub/winvitals";
