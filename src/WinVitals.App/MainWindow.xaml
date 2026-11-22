@@ -69,6 +69,10 @@
                         <Button Style="{StaticResource Ghost}" Content="Log folder" FontSize="12"
                                 Padding="8,2" Margin="6,0,0,0" Click="OnOpenLogs" />
                     </StackPanel>
+                    <Button Style="{StaticResource Ghost}" Content="Say hello / give feedback" FontSize="12"
+                            Padding="0,2" Margin="0,6,0,0" HorizontalAlignment="Left"
+                            ToolTip="Opens a short form on GitHub. WinVitals sends nothing by itself."
+                            Click="OnFeedback" />
                 </StackPanel>
             </Grid>
         </Border>

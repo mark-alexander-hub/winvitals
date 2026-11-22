@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: How to contribute
+    url: https://github.com/mark-alexander-hub/winvitals/blob/main/CONTRIBUTING.md
+    about: Setting up, picking an issue, and what a good pull request looks like.

@@ -1,0 +1,46 @@
+name: Say hello / give feedback
+description: Tell us how you found WinVitals and whether it helped. Takes a minute.
+title: "Hello: "
+labels: ["feedback"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for trying WinVitals. It has no telemetry, so this form is the only way
+        to know who uses it and what for. Everything here is public; leave out anything personal.
+  - type: dropdown
+    id: found
+    attributes:
+      label: How did you find WinVitals?
+      options:
+        - winget search / winget install
+        - GitHub (search, trending, a topic page)
+        - Reddit or a forum
+        - A friend or colleague
+        - A blog, video or article
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: found-detail
+    attributes:
+      label: Where exactly? (optional)
+      placeholder: e.g. the subreddit, the video, the search you typed
+  - type: textarea
+    id: problem
+    attributes:
+      label: What were you trying to fix?
+      placeholder: e.g. "laptop wakes up in my bag", "PC got slow after an update"
+  - type: dropdown
+    id: helped
+    attributes:
+      label: Did it help?
+      options:
+        - Yes, it found and fixed the problem
+        - It found the problem, but I fixed it another way
+        - Not really
+        - Too early to say
+  - type: textarea
+    id: wish
+    attributes:
+      label: One thing you wish it did (optional)

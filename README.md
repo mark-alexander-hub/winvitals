@@ -240,6 +240,12 @@ Implement `IFix`, add it to `FixCatalog`. The contract:
 
 ## Contributing
 
+**Using it?** Press *Say hello* in the app or fill in the
+[one-minute form](https://github.com/mark-alexander-hub/winvitals/issues/new?template=hello.yml).
+WinVitals has no telemetry, so that is the only way to know it helped.
+
+New contributors: start with [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[`good first issue`](https://github.com/mark-alexander-hub/winvitals/labels/good%20first%20issue) label.
 Issues and pull requests welcome. Especially useful:
 
 - Machines where a check reports something wrong — please attach a `--redact`ed report

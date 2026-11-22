@@ -125,4 +125,10 @@ public partial class MainWindow : Window
         try { Process.Start(new ProcessStartInfo { FileName = Log.Directory, UseShellExecute = true }); }
         catch { /* nothing useful to do if the shell refuses */ }
     }
+
+    private void OnFeedback(object sender, RoutedEventArgs e)
+    {
+        try { Process.Start(new ProcessStartInfo { FileName = AppInfo.FeedbackUrl, UseShellExecute = true }); }
+        catch { /* nothing useful to do if the shell refuses */ }
+    }
 }

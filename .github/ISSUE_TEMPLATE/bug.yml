@@ -1,0 +1,29 @@
+name: Something is wrong
+description: A check reported something untrue, a repair failed, or the app misbehaved.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: WinVitals version
+      description: Bottom-left of the window, e.g. v0.4.0
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version and PC model
+      placeholder: e.g. Windows 11 24H2, Lenovo ThinkBook 14 G4
+  - type: textarea
+    id: report
+    attributes:
+      label: Redacted report (strongly encouraged)
+      description: |
+        Save Report → tick "remove personal details", or run `WinVitals.exe --redact`,
+        then attach the file here. Please check it before posting.

@@ -10,6 +10,13 @@ public static class AppInfo
     /// <summary>Where releases live; used by the update check and the README.</summary>
     public const string Repository = "mark-alexander-hub/winvitals";
 
+    /// <summary>
+    /// The "Say hello" button opens this form in the browser. The app itself sends nothing;
+    /// whatever the user types goes to a public GitHub issue only if they submit it.
+    /// </summary>
+    public const string FeedbackUrl =
+        "https://github.com/" + Repository + "/issues/new?template=hello.yml";
+
     /// <summary>Order here is the order of sections in the report and the scan.</summary>
     public static readonly ICollector[] AllCollectors =
     {
